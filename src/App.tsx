@@ -22,9 +22,14 @@ export default function App() {
       const path = window.location.pathname.toLowerCase();
       const hash = window.location.hash.toLowerCase();
       const search = window.location.search.toLowerCase();
-      // Admin page opens ONLY with /samir or #samir
+      // Admin page opens with /admin, /samir, #admin, or #samir
       const isCurrentAdmin =
-        path.startsWith('/samir') || hash === '#samir' || search.includes('samir');
+        path.startsWith('/admin') ||
+        path.startsWith('/samir') ||
+        hash === '#admin' ||
+        hash === '#samir' ||
+        search.includes('admin') ||
+        search.includes('samir');
       setIsAdmin(isCurrentAdmin);
     };
 
