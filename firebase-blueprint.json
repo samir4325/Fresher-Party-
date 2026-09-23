@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "entities": {
+    "Student": {
+      "title": "Student Registration",
+      "description": "Fresher party student registration and digital entry pass record",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique Pass ID, e.g. FP-2k26-1234"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full name of the student"
+        },
+        "enrollmentNumber": {
+          "type": "string",
+          "description": "College enrollment or roll number"
+        },
+        "mobileNumber": {
+          "type": "string",
+          "description": "Contact phone number"
+        },
+        "department": {
+          "type": "string",
+          "description": "Department or branch"
+        },
+        "semester": {
+          "type": "string",
+          "description": "Current semester"
+        },
+        "gender": {
+          "type": "string",
+          "description": "Gender of the student"
+        },
+        "feeStatus": {
+          "type": "string",
+          "enum": ["paid", "pending"],
+          "description": "Fee payment status"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["approved", "pending", "rejected"],
+          "description": "Approval status"
+        },
+        "registeredAt": {
+          "type": "string",
+          "description": "ISO timestamp of registration"
+        },
+        "isEntryVerified": {
+          "type": "boolean",
+          "description": "Whether gate entry has been verified"
+        },
+        "verifiedAt": {
+          "type": "string",
+          "description": "ISO timestamp of gate entry"
+        },
+        "verifiedBy": {
+          "type": "string",
+          "description": "Name or identifier of gate volunteer who verified entry"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional administrative notes"
+        }
+      },
+      "required": ["id", "fullName", "enrollmentNumber", "mobileNumber", "department", "semester", "gender", "status", "registeredAt", "isEntryVerified"]
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": "Student",
+      "description": "Public and organizer managed student registrations for Fresher Party 2k26"
+    }
+  }
+}

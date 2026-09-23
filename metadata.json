@@ -1,0 +1,6 @@
+{
+  "name": "Fresher Party Student Portal & Entry Pass",
+  "description": "Student registration, digital QR entry passes, organizer QR scan verification, and admin dashboard for the annual Fresher Party.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

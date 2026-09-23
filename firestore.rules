@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /students/{studentId} {
+      // Allow reading passes for student lookup and admin dashboard
+      allow read: if true;
+      
+      // Allow registration form submission and gate verification updates
+      allow create: if request.resource.data.fullName is string
+                    && request.resource.data.enrollmentNumber is string
+                    && request.resource.data.id is string;
+      
+      // Allow admin & gate updates (fee toggle, entry verification)
+      allow update: if true;
+      
+      // Allow admin to delete registrations
+      allow delete: if true;
+    }
+  }
+}
