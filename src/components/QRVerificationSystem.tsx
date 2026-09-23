@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { StudentRegistration, QRVerificationResult } from '../types';
 import { StudentService } from '../services/studentService';
+import { RTDB_URL } from '../firebase';
 
 interface QRVerificationSystemProps {
   initialCode?: string;
@@ -64,6 +65,34 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
       handleVerify(initialCode);
     }
   }, [initialCode]);
+
+  // Keep live sync active while QR scanner is open so registrations from other devices (laptop/mobile) sync in real time
+  useEffect(() => {
+    let isMounted = true;
+    const syncLiveStudents = async () => {
+      try {
+        const res = await fetch(`${RTDB_URL}/students.json`);
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          if (data && typeof data === 'object') {
+            const list = Object.values(data) as StudentRegistration[];
+            const cleanList = list.filter((s) => s && s.id && !s.id.startsWith('FP-2k26-4812'));
+            localStorage.setItem('fresher_party_students_v1', JSON.stringify(cleanList));
+          }
+        }
+      } catch {}
+    };
+
+    // Immediate sync on scanner open
+    syncLiveStudents();
+
+    // Poll every 2.5 seconds in the background
+    const timer = setInterval(syncLiveStudents, 2500);
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     if (scanMode === 'camera' && !showPopup) {
@@ -240,11 +269,35 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
       // If fees are paid and autoVerify is on, verify entry immediately
       if (student.feeStatus === 'paid') {
         if (autoVerify) {
-          const result = await StudentService.verifyEntry(student.id, 'Gate Scanner');
-          setVerificationResult(result);
-          if (result.student) setScannedStudent(result.student);
-          addRecentScan(student.id, student.fullName, 'paid', 'verified');
-          if (onStudentUpdated) onStudentUpdated();
+          const now = new Date().toISOString();
+          const updatedStudent: StudentRegistration = {
+            ...student,
+            isEntryVerified: true,
+            verifiedAt: now,
+            verifiedBy: 'Gate Scanner',
+          };
+          setScannedStudent(updatedStudent);
+          setVerificationResult({
+            success: true,
+            alreadyVerified: false,
+            message: 'Pass verified & Entry Approved! Welcome! 🎉',
+            student: updatedStudent,
+            verifiedAt: now,
+          });
+          addRecentScan(updatedStudent.id, updatedStudent.fullName, 'paid', 'verified');
+          setShowPopup(true);
+          setIsVerifying(false);
+
+          // Fast background async database update (does not delay popup)
+          StudentService.updateStudent(student.id, {
+            isEntryVerified: true,
+            verifiedAt: now,
+            verifiedBy: 'Gate Scanner',
+          }).then(() => {
+            if (onStudentUpdated) onStudentUpdated();
+          }).catch(console.error);
+
+          return;
         } else {
           setVerificationResult({
             success: true,
@@ -258,7 +311,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
         setVerificationResult({
           success: false,
           alreadyVerified: false,
-          message: 'Party fee ₹500 is pending. Please collect fee before entry.',
+          message: 'Party fee is pending. Please collect fee before entry.',
           student,
         });
       }
@@ -310,7 +363,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
       setVerificationResult({
         success: true,
         alreadyVerified: false,
-        message: 'Fee collected (₹500 PAID) & Gate Entry Approved! Welcome! 🎉',
+        message: 'Fee marked PAID & Gate Entry Approved! Welcome! 🎉',
         student: updated,
         verifiedAt: now,
       });
@@ -639,7 +692,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
                   : isDenied
                   ? 'ENTRY DENIED'
                   : isFeesPending
-                  ? '⚠️ FEES PENDING (₹500)'
+                  ? '⚠️ FEES PENDING'
                   : '✅ ENTRY APPROVED'}
               </h2>
 
@@ -650,7 +703,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
                   : isDenied
                   ? verificationResult?.message
                   : isFeesPending
-                  ? 'Collect ₹500 party fee before admitting student'
+                  ? 'Collect party fee before admitting student'
                   : 'Student pass verified & fees confirmed paid'}
               </p>
             </div>
@@ -683,12 +736,12 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
                           {scannedStudent.feeStatus === 'paid' ? (
                             <>
                               <Check className="h-3 w-3" />
-                              PAID (₹500)
+                              PAID
                             </>
                           ) : (
                             <>
                               <AlertTriangle className="h-3 w-3" />
-                              UNPAID (₹500)
+                              PENDING
                             </>
                           )}
                         </span>
@@ -740,10 +793,10 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
                     <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 text-center space-y-2">
                       <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-300">
                         <DollarSign className="h-4 w-4" />
-                        <span>Cash / UPI Payment Pending</span>
+                        <span>Party Fee Pending</span>
                       </div>
                       <p className="text-[11px] text-amber-200/80">
-                        Did student pay ₹500 at the gate? Tap below to record payment immediately:
+                        Did student pay party fee at the gate? Tap below to record payment:
                       </p>
                       <button
                         type="button"
@@ -752,7 +805,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
                         className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 py-2.5 px-4 text-xs font-black shadow-lg shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-60"
                       >
                         <Check className="h-4 w-4 stroke-[3]" />
-                        <span>{isUpdatingFee ? 'Updating Database...' : 'Collect ₹500 & Mark Paid ✓'}</span>
+                        <span>{isUpdatingFee ? 'Updating Database...' : 'Mark Fees Paid & Admit ✓'}</span>
                       </button>
                     </div>
                   )}

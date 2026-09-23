@@ -278,7 +278,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <p className="text-2xl font-bold font-mono text-indigo-800 mt-1">
             ₹{stats?.totalFeesCollected?.toLocaleString() || 0}
           </p>
-          <span className="text-[10px] text-indigo-600 font-medium">₹500 / Student</span>
+          <span className="text-[10px] text-indigo-600 font-medium">Live Collection</span>
         </div>
 
         {/* Gate Verified */}
@@ -424,7 +424,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         ) : (
                           <>
                             <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                            <span>FEES PENDING (₹500)</span>
+                            <span>FEES PENDING</span>
                           </>
                         )}
                       </button>

@@ -110,33 +110,55 @@ export const StudentService = {
     return list;
   },
 
-  // Get a single student by ID or Enrollment Number
+  // Get a single student by ID or Enrollment Number (Instant local + cloud fallback)
   async getStudent(identifier: string): Promise<StudentRegistration | null> {
     const clean = identifier.trim();
     if (!clean) return null;
-
-    try {
-      // 1. Try directly by ID in Firebase Realtime Database
-      const res = await fetch(`${RTDB_URL}/students/${clean.toUpperCase()}.json`);
-      if (res.ok) {
-        const student = await res.json();
-        if (student && student.id) {
-          return student as StudentRegistration;
-        }
-      }
-    } catch {
-      // Fallback to local
-    }
-
-    // 2. Search local / cached list
-    const local = getLocalStudents();
     const qLower = clean.toLowerCase();
-    const found = local.find(
+
+    // 1. Instant check from local cache (0ms!)
+    const local = getLocalStudents();
+    const localFound = local.find(
       (s) =>
         s.id.toLowerCase() === qLower ||
         s.enrollmentNumber.toLowerCase() === qLower
     );
-    return found || null;
+    if (localFound) return localFound;
+
+    // 2. Fallback to Firebase Realtime Database (for cross-device instant sync)
+    try {
+      // Direct ID fetch
+      const res = await fetch(`${RTDB_URL}/students/${clean}.json`);
+      if (res.ok) {
+        const student = await res.json();
+        if (student && student.id && !DEMO_IDS.has(student.id)) {
+          saveLocalStudents([student, ...local.filter((s) => s.id !== student.id)]);
+          return student as StudentRegistration;
+        }
+      }
+
+      // If clean was enrollment number or case-mismatched, fetch the live students object
+      const allRes = await fetch(`${RTDB_URL}/students.json`);
+      if (allRes.ok) {
+        const allData = await allRes.json();
+        if (allData && typeof allData === 'object') {
+          const allList = (Object.values(allData) as StudentRegistration[]).filter(
+            (s) => s && s.id && !DEMO_IDS.has(s.id)
+          );
+          saveLocalStudents(allList);
+          const found = allList.find(
+            (s) =>
+              s.id.toLowerCase() === qLower ||
+              s.enrollmentNumber.toLowerCase() === qLower
+          );
+          if (found) return found;
+        }
+      }
+    } catch (err) {
+      console.warn('Firebase student lookup error:', err);
+    }
+
+    return null;
   },
 
   // Register a new student (Instant pass response + real-time cloud write)
