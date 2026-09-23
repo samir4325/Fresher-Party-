@@ -1,22 +1,10 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-} from 'firebase/firestore';
-import { db, isFirebaseConfigured } from '../firebase';
-import { StudentRegistration, DashboardStats, QRVerificationResult, FeeStatus } from '../types';
+import { RTDB_URL } from '../firebase';
+import { StudentRegistration, DashboardStats, QRVerificationResult } from '../types';
 import { INITIAL_STUDENTS } from '../data/seedData';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const LOCAL_STORAGE_KEY = 'fresher_party_students_v1';
-const STUDENTS_COLLECTION = 'students';
 
 function getLocalStudents(): StudentRegistration[] {
   try {
@@ -41,25 +29,51 @@ function saveLocalStudents(students: StudentRegistration[]) {
   }
 }
 
-// Seed initial students into Firestore if empty
-let isSeeded = false;
-async function ensureFirestoreSeed() {
-  if (isSeeded || !db || !isFirebaseConfigured) return;
+// Background sync to Firebase Realtime Database
+async function syncToFirebase(studentId: string, data: Partial<StudentRegistration>, method: 'PUT' | 'PATCH' | 'DELETE' = 'PUT') {
   try {
-    const snap = await getDocs(collection(db, STUDENTS_COLLECTION));
-    if (snap.empty) {
-      for (const s of INITIAL_STUDENTS) {
-        await setDoc(doc(db, STUDENTS_COLLECTION, s.id), s);
-      }
+    const url = `${RTDB_URL}/students/${studentId}.json`;
+    if (method === 'DELETE') {
+      await fetch(url, { method: 'DELETE' });
+    } else {
+      await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
     }
-    isSeeded = true;
   } catch (err) {
-    console.warn('Could not check/seed Firestore', err);
+    console.warn('Firebase RTDB background sync warning:', err);
+  }
+}
+
+// Initial seed helper
+let hasSeededRTDB = false;
+async function ensureRTDBSeeded() {
+  if (hasSeededRTDB) return;
+  try {
+    const res = await fetch(`${RTDB_URL}/students.json`);
+    const data = await res.json();
+    if (!data) {
+      // RTDB is empty, populate with seed data
+      const seedObj: Record<string, StudentRegistration> = {};
+      INITIAL_STUDENTS.forEach((s) => {
+        seedObj[s.id] = s;
+      });
+      await fetch(`${RTDB_URL}/students.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(seedObj),
+      });
+    }
+    hasSeededRTDB = true;
+  } catch (err) {
+    console.warn('RTDB seed check warning:', err);
   }
 }
 
 export const StudentService = {
-  // Fetch all students (with optional query filter)
+  // Fetch all students from Firebase Realtime Database
   async getStudents(filters?: {
     department?: string;
     semester?: string;
@@ -70,20 +84,21 @@ export const StudentService = {
   }): Promise<StudentRegistration[]> {
     let list: StudentRegistration[] = [];
 
-    if (db && isFirebaseConfigured) {
-      try {
-        await ensureFirestoreSeed();
-        const snap = await getDocs(collection(db, STUDENTS_COLLECTION));
-        if (!snap.empty) {
-          list = snap.docs.map((d) => d.data() as StudentRegistration);
+    try {
+      await ensureRTDBSeeded();
+      const res = await fetch(`${RTDB_URL}/students.json`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && typeof data === 'object') {
+          list = Object.values(data) as StudentRegistration[];
           saveLocalStudents(list);
         } else {
           list = getLocalStudents();
         }
-      } catch {
+      } else {
         list = getLocalStudents();
       }
-    } else {
+    } catch {
       list = getLocalStudents();
     }
 
@@ -122,29 +137,20 @@ export const StudentService = {
     const clean = identifier.trim();
     if (!clean) return null;
 
-    if (db && isFirebaseConfigured) {
-      try {
-        // 1. Try directly by document ID (e.g. FP-2k26-4812)
-        const docRef = doc(db, STUDENTS_COLLECTION, clean.toUpperCase());
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          return docSnap.data() as StudentRegistration;
+    try {
+      // 1. Try directly by ID in Firebase Realtime Database
+      const res = await fetch(`${RTDB_URL}/students/${clean.toUpperCase()}.json`);
+      if (res.ok) {
+        const student = await res.json();
+        if (student && student.id) {
+          return student as StudentRegistration;
         }
-
-        // 2. Query by enrollmentNumber
-        const q = query(
-          collection(db, STUDENTS_COLLECTION),
-          where('enrollmentNumber', '==', clean.toUpperCase())
-        );
-        const querySnap = await getDocs(q);
-        if (!querySnap.empty) {
-          return querySnap.docs[0].data() as StudentRegistration;
-        }
-      } catch {
-        // fallback to local
       }
+    } catch {
+      // Fallback to local
     }
 
+    // 2. Search local / cached list
     const local = getLocalStudents();
     const qLower = clean.toLowerCase();
     const found = local.find(
@@ -155,7 +161,7 @@ export const StudentService = {
     return found || null;
   },
 
-  // Register a new student (Instant response, background cloud sync)
+  // Register a new student (Instant pass response + real-time cloud write)
   async registerStudent(
     data: Omit<StudentRegistration, 'id' | 'status' | 'registeredAt' | 'isEntryVerified' | 'verifiedAt'>
   ): Promise<StudentRegistration> {
@@ -170,7 +176,7 @@ export const StudentService = {
       );
     }
 
-    // 2. Create student record immediately
+    // 2. Generate unique pass ID
     const newId = `FP-2k26-${Math.floor(1000 + Math.random() * 9000)}`;
     const newStudent: StudentRegistration = {
       ...data,
@@ -184,20 +190,16 @@ export const StudentService = {
       notes: '',
     };
 
-    // 3. Save locally instantly so pass is immediately ready
+    // 3. Save locally instantly so pass is shown to student in 0.01 second
     saveLocalStudents([newStudent, ...local.filter((s) => s.id !== newId)]);
 
-    // 4. Background Sync to Firestore (non-blocking, never freezes the UI)
-    if (db && isFirebaseConfigured) {
-      setDoc(doc(db, STUDENTS_COLLECTION, newId), newStudent).catch((err) => {
-        console.warn('Background Firestore write queued/fallback:', err);
-      });
-    }
+    // 4. Real-time background sync to Firebase Realtime Database
+    syncToFirebase(newId, newStudent, 'PUT');
 
     return newStudent;
   },
 
-  // Update a student registration (instant local update + background sync)
+  // Update a student registration (fee toggle, name edit, etc.)
   async updateStudent(id: string, updates: Partial<StudentRegistration>): Promise<StudentRegistration> {
     const local = getLocalStudents();
     const index = local.findIndex((s) => s.id === id);
@@ -210,26 +212,19 @@ export const StudentService = {
     else local.push(updated);
     saveLocalStudents(local);
 
-    if (db && isFirebaseConfigured) {
-      const docRef = doc(db, STUDENTS_COLLECTION, id);
-      updateDoc(docRef, updates).catch((err) => {
-        console.warn('Background Firestore update queued:', err);
-      });
-    }
+    // Sync changes to Firebase Realtime Database
+    syncToFirebase(id, updates, 'PATCH');
 
     return updated;
   },
 
-  // Delete student registration (instant local delete + background sync)
+  // Delete student registration
   async deleteStudent(id: string): Promise<boolean> {
     const local = getLocalStudents().filter((s) => s.id !== id);
     saveLocalStudents(local);
 
-    if (db && isFirebaseConfigured) {
-      deleteDoc(doc(db, STUDENTS_COLLECTION, id)).catch((err) => {
-        console.warn('Background Firestore delete queued:', err);
-      });
-    }
+    // Delete from Firebase Realtime Database
+    syncToFirebase(id, {}, 'DELETE');
 
     return true;
   },
