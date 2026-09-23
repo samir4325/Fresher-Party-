@@ -7,13 +7,20 @@ import {
   CheckCircle2,
   AlertTriangle,
   XCircle,
-  RefreshCw,
-  Zap,
   RotateCcw,
   Sparkles,
   User,
   CreditCard,
   Check,
+  X,
+  Phone,
+  GraduationCap,
+  Calendar,
+  AlertOctagon,
+  DollarSign,
+  ChevronRight,
+  ShieldCheck,
+  ShieldAlert,
 } from 'lucide-react';
 import { StudentRegistration, QRVerificationResult } from '../types';
 import { StudentService } from '../services/studentService';
@@ -32,9 +39,11 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
   const [autoVerify, setAutoVerify] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // Result state
+  // Popup Modal Result state
+  const [showPopup, setShowPopup] = useState(false);
   const [verificationResult, setVerificationResult] = useState<QRVerificationResult | null>(null);
   const [scannedStudent, setScannedStudent] = useState<StudentRegistration | null>(null);
+  const [isUpdatingFee, setIsUpdatingFee] = useState(false);
 
   // Camera state
   const [cameraActive, setCameraActive] = useState(false);
@@ -47,7 +56,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
 
   // Recent scans log
   const [recentScans, setRecentScans] = useState<
-    { id: string; name: string; time: string; status: 'verified' | 'duplicate' | 'rejected' }[]
+    { id: string; name: string; time: string; feeStatus: string; status: 'verified' | 'duplicate' | 'rejected' }[]
   >([]);
 
   useEffect(() => {
@@ -57,7 +66,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
   }, [initialCode]);
 
   useEffect(() => {
-    if (scanMode === 'camera') {
+    if (scanMode === 'camera' && !showPopup) {
       startCamera();
     } else {
       stopCamera();
@@ -65,7 +74,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
     return () => {
       stopCamera();
     };
-  }, [scanMode, cameraFacing]);
+  }, [scanMode, cameraFacing, showPopup]);
 
   const startCamera = async () => {
     stopCamera();
@@ -127,7 +136,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
 
         if (code && code.data) {
           try {
-            if (navigator.vibrate) navigator.vibrate(120);
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
           } catch {}
           handleVerify(code.data);
           stopCamera();
@@ -163,6 +172,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
               message: 'No QR code detected. Please ensure the pass QR is clear.',
             });
             setScannedStudent(null);
+            setShowPopup(true);
           }
         }
       };
@@ -194,6 +204,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
           message: `Invalid Pass: No student registration found for "${target}".`,
         });
         setScannedStudent(null);
+        setShowPopup(true);
         setIsVerifying(false);
         return;
       }
@@ -206,7 +217,8 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
           message: 'ENTRY DENIED: Registration was rejected by administration.',
           student,
         });
-        addRecentScan(student.id, student.fullName, 'rejected');
+        addRecentScan(student.id, student.fullName, student.feeStatus || 'pending', 'rejected');
+        setShowPopup(true);
         setIsVerifying(false);
         return;
       }
@@ -217,7 +229,8 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
           message: 'ENTRY PENDING: Registration has not been approved yet.',
           student,
         });
-        addRecentScan(student.id, student.fullName, 'rejected');
+        addRecentScan(student.id, student.fullName, student.feeStatus || 'pending', 'rejected');
+        setShowPopup(true);
         setIsVerifying(false);
         return;
       }
@@ -227,19 +240,20 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
           success: false,
           alreadyVerified: true,
           verifiedAt: student.verifiedAt || undefined,
-          message: `ALREADY ENTERED: Pass was already scanned at ${new Date(student.verifiedAt || '').toLocaleTimeString()}! Duplicate entry forbidden.`,
+          message: `ALREADY SCANNED: Pass was already used at ${new Date(student.verifiedAt || '').toLocaleTimeString()}! Duplicate entry forbidden.`,
           student,
         });
-        addRecentScan(student.id, student.fullName, 'duplicate');
+        addRecentScan(student.id, student.fullName, student.feeStatus || 'pending', 'duplicate');
+        setShowPopup(true);
         setIsVerifying(false);
         return;
       }
 
       if (autoVerify) {
-        const result = await StudentService.verifyEntry(student.id, 'Mobile Gate Scanner');
+        const result = await StudentService.verifyEntry(student.id, 'Gate Scanner');
         setVerificationResult(result);
         if (result.student) setScannedStudent(result.student);
-        addRecentScan(student.id, student.fullName, 'verified');
+        addRecentScan(student.id, student.fullName, student.feeStatus || 'pending', 'verified');
         if (onStudentUpdated) onStudentUpdated();
       } else {
         setVerificationResult({
@@ -249,12 +263,14 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
           student,
         });
       }
+      setShowPopup(true);
     } catch (err: any) {
       setVerificationResult({
         success: false,
         message: err.message || 'Verification error.',
       });
       setScannedStudent(null);
+      setShowPopup(true);
     } finally {
       setIsVerifying(false);
     }
@@ -267,7 +283,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
       const res = await StudentService.verifyEntry(scannedStudent.id, 'Gate Volunteer');
       setVerificationResult(res);
       if (res.student) setScannedStudent(res.student);
-      addRecentScan(scannedStudent.id, scannedStudent.fullName, 'verified');
+      addRecentScan(scannedStudent.id, scannedStudent.fullName, scannedStudent.feeStatus || 'pending', 'verified');
       if (onStudentUpdated) onStudentUpdated();
     } catch (err: any) {
       setVerificationResult({
@@ -276,6 +292,29 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
       });
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  const handleQuickMarkFeesPaid = async () => {
+    if (!scannedStudent) return;
+    setIsUpdatingFee(true);
+    try {
+      const updated = await StudentService.updateStudent(scannedStudent.id, {
+        feeStatus: 'paid',
+      });
+      setScannedStudent(updated);
+      if (verificationResult) {
+        setVerificationResult({
+          ...verificationResult,
+          student: updated,
+          message: 'Fee collected (₹500 PAID) & entry approved!',
+        });
+      }
+      if (onStudentUpdated) onStudentUpdated();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsUpdatingFee(false);
     }
   };
 
@@ -295,11 +334,29 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
     }
   };
 
-  const addRecentScan = (id: string, name: string, status: 'verified' | 'duplicate' | 'rejected') => {
+  const closePopupAndScanNext = () => {
+    setShowPopup(false);
+    setVerificationResult(null);
+    setScannedStudent(null);
+    setManualInput('');
+    if (scanMode === 'camera') {
+      setTimeout(() => {
+        startCamera();
+      }, 150);
+    }
+  };
+
+  const addRecentScan = (
+    id: string,
+    name: string,
+    feeStatus: string,
+    status: 'verified' | 'duplicate' | 'rejected'
+  ) => {
     setRecentScans((prev) => [
       {
         id,
         name,
+        feeStatus,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
         status,
       },
@@ -307,9 +364,14 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
     ]);
   };
 
+  // Determine popup theme
+  const isDuplicate = verificationResult?.alreadyVerified;
+  const isDenied = verificationResult && !verificationResult.success && !isDuplicate;
+  const isFeesPending = scannedStudent ? (scannedStudent.feeStatus || 'pending') !== 'paid' : false;
+  const isApproved = verificationResult?.success && !isDuplicate && !isDenied;
+
   return (
     <div className="mx-auto max-w-md px-3 sm:px-4 space-y-4">
-      
       {/* Mobile Top Bar Controls */}
       <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -318,13 +380,13 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
           </div>
           <div>
             <h3 className="font-bold text-slate-900 text-xs sm:text-sm">Gate Scanner</h3>
-            <p className="text-[10px] text-slate-500">Scan passes at entrance</p>
+            <p className="text-[10px] text-slate-500">Live QR scanning & instant check-in</p>
           </div>
         </div>
 
         {/* Auto check-in toggle */}
         <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg">
-          <span className="text-[11px] text-slate-600 font-medium">Auto:</span>
+          <span className="text-[11px] text-slate-600 font-medium">Auto Check-in:</span>
           <button
             type="button"
             onClick={() => setAutoVerify(!autoVerify)}
@@ -372,39 +434,34 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
         </button>
       </div>
 
-      {/* Camera Viewfinder (Mobile-First) */}
+      {/* Camera Viewfinder */}
       {scanMode === 'camera' && (
         <div className="relative overflow-hidden rounded-2xl bg-black border-2 border-slate-900 shadow-md aspect-square w-full flex items-center justify-center">
-          <video
-            ref={videoRef}
-            className="h-full w-full object-cover"
-            playsInline
-            muted
-          />
+          <video ref={videoRef} className="h-full w-full object-cover" playsInline muted />
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Scanning Box Reticle */}
+          {/* Scanning Reticle */}
           {cameraActive && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="relative h-56 w-56 rounded-2xl border-2 border-indigo-400/90 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+              <div className="relative h-60 w-60 rounded-3xl border-2 border-indigo-400/90 shadow-[0_0_25px_rgba(99,102,241,0.35)]">
                 {/* Corner markers */}
-                <div className="absolute -top-1 -left-1 h-5 w-5 border-t-4 border-l-4 border-white rounded-tl-lg" />
-                <div className="absolute -top-1 -right-1 h-5 w-5 border-t-4 border-r-4 border-white rounded-tr-lg" />
-                <div className="absolute -bottom-1 -left-1 h-5 w-5 border-b-4 border-l-4 border-white rounded-bl-lg" />
-                <div className="absolute -bottom-1 -right-1 h-5 w-5 border-b-4 border-r-4 border-white rounded-br-lg" />
+                <div className="absolute -top-1.5 -left-1.5 h-6 w-6 border-t-4 border-l-4 border-white rounded-tl-xl" />
+                <div className="absolute -top-1.5 -right-1.5 h-6 w-6 border-t-4 border-r-4 border-white rounded-tr-xl" />
+                <div className="absolute -bottom-1.5 -left-1.5 h-6 w-6 border-b-4 border-l-4 border-white rounded-bl-xl" />
+                <div className="absolute -bottom-1.5 -right-1.5 h-6 w-6 border-b-4 border-r-4 border-white rounded-br-xl" />
 
                 {/* Animated scan beam */}
-                <div className="absolute inset-x-2 top-0 h-0.5 bg-gradient-to-r from-transparent via-indigo-400 to-transparent animate-pulse" />
+                <div className="absolute inset-x-2 top-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-pulse shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
               </div>
             </div>
           )}
 
-          {/* Camera controls overlay */}
+          {/* Flip Camera button */}
           <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
             <button
               type="button"
               onClick={flipCamera}
-              className="rounded-full bg-black/60 p-2 text-white backdrop-blur-xs hover:bg-black/80 transition-colors cursor-pointer"
+              className="rounded-full bg-black/60 p-2.5 text-white backdrop-blur-xs hover:bg-black/80 transition-colors cursor-pointer"
               title="Flip Camera"
             >
               <RotateCcw className="h-4 w-4" />
@@ -474,113 +531,282 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
         </div>
       )}
 
-      {/* Verification Result Card */}
-      {verificationResult && (
-        <div className={`rounded-2xl p-4 border text-left space-y-3 shadow-sm ${
-          verificationResult.alreadyVerified
-            ? 'bg-amber-50 border-amber-300 text-amber-900'
-            : verificationResult.success
-            ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-            : 'bg-red-50 border-red-300 text-red-900'
-        }`}>
-          <div className="flex items-start gap-2.5">
-            {verificationResult.alreadyVerified ? (
-              <AlertTriangle className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
-            ) : verificationResult.success ? (
-              <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-0.5" />
-            ) : (
-              <XCircle className="h-6 w-6 text-red-600 shrink-0 mt-0.5" />
-            )}
-            <div className="flex-1">
-              <h4 className="font-extrabold text-sm sm:text-base">
-                {verificationResult.alreadyVerified
-                  ? 'DUPLICATE ENTRY DETECTED'
-                  : verificationResult.success
-                  ? 'ENTRY VERIFIED & CHECKED IN'
-                  : 'ENTRY REJECTED'}
-              </h4>
-              <p className="text-xs mt-0.5">{verificationResult.message}</p>
-            </div>
+      {/* Recent Scans Strip */}
+      {recentScans.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-bold text-slate-700">
+            <span>Recent Gate Scans</span>
+            <span className="text-slate-400 font-normal">Last {recentScans.length}</span>
           </div>
-
-          {/* Student Profile Card */}
-          {scannedStudent && (
-            <div className="rounded-xl border border-black/10 bg-white/80 p-3 space-y-2 text-xs text-slate-800">
-              <div className="flex items-center justify-between border-b border-black/10 pb-2">
+          <div className="divide-y divide-slate-100">
+            {recentScans.map((scan, i) => (
+              <div key={i} className="py-1.5 flex items-center justify-between text-xs">
                 <div>
-                  <p className="font-bold text-slate-900 text-sm">{scannedStudent.fullName}</p>
-                  <p className="font-mono text-indigo-700 font-semibold">{scannedStudent.enrollmentNumber}</p>
+                  <p className="font-semibold text-slate-800 text-[11px]">{scan.name}</p>
+                  <p className="font-mono text-[10px] text-slate-400">{scan.id} • {scan.time}</p>
                 </div>
-                <div className="text-right">
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    scannedStudent.feeStatus === 'paid'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {scannedStudent.feeStatus === 'paid' ? 'FEES PAID ✓' : 'FEES PENDING ✕'}
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                      scan.feeStatus === 'paid'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {scan.feeStatus === 'paid' ? 'PAID' : 'PENDING'}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      scan.status === 'verified'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : scan.status === 'duplicate'
+                        ? 'bg-red-50 text-red-700 border border-red-200'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {scan.status.toUpperCase()}
                   </span>
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600">
-                <div>
-                  <span className="font-semibold block text-slate-400 text-[10px]">BRANCH</span>
-                  <span>{scannedStudent.department}</span>
-                </div>
-                <div>
-                  <span className="font-semibold block text-slate-400 text-[10px]">SEMESTER</span>
-                  <span>{scannedStudent.semester}</span>
-                </div>
-                <div>
-                  <span className="font-semibold block text-slate-400 text-[10px]">PASS ID</span>
-                  <span className="font-mono">{scannedStudent.id}</span>
-                </div>
-                <div>
-                  <span className="font-semibold block text-slate-400 text-[10px]">MOBILE</span>
-                  <span className="font-mono">{scannedStudent.mobileNumber}</span>
-                </div>
-              </div>
-
-              {!scannedStudent.isEntryVerified && !autoVerify && (
-                <button
-                  type="button"
-                  onClick={confirmManualEntry}
-                  className="w-full mt-2 rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white shadow-xs cursor-pointer"
-                >
-                  Confirm Entry
-                </button>
-              )}
-
-              {scannedStudent.isEntryVerified && (
-                <div className="pt-2 border-t border-black/10 flex justify-between items-center text-[11px]">
-                  <span className="text-emerald-700 font-semibold">Checked in successfully</span>
-                  <button
-                    type="button"
-                    onClick={() => handleResetEntry(scannedStudent.id)}
-                    className="text-slate-500 hover:text-slate-800 underline cursor-pointer"
-                  >
-                    Reset Entry
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Scan Next Pass Button */}
-          <button
-            type="button"
-            onClick={() => {
-              setVerificationResult(null);
-              setScannedStudent(null);
-              if (scanMode === 'camera') startCamera();
-            }}
-            className="w-full rounded-lg bg-slate-900 text-white py-2 text-xs font-bold transition-colors cursor-pointer"
-          >
-            Scan Next Pass
-          </button>
+            ))}
+          </div>
         </div>
       )}
 
+      {/* ========================================================================= */}
+      {/* POPUP MODAL FOR SCAN RESULTS (DYNAMIC THEME: PAID vs PENDING vs DUPLICATE) */}
+      {/* ========================================================================= */}
+      {showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md transition-all animate-in fade-in duration-200">
+          <div
+            className={`relative w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden border-2 transition-all transform animate-in zoom-in-95 duration-200 ${
+              isDuplicate
+                ? 'bg-slate-900 border-red-500 shadow-[0_0_40px_rgba(239,68,68,0.4)]'
+                : isDenied
+                ? 'bg-slate-900 border-rose-500 shadow-[0_0_35px_rgba(244,63,94,0.35)]'
+                : isFeesPending
+                ? 'bg-gradient-to-b from-amber-950 via-slate-900 to-slate-900 border-amber-500 shadow-[0_0_40px_rgba(245,158,11,0.45)]'
+                : 'bg-gradient-to-b from-emerald-950 via-slate-900 to-slate-900 border-emerald-400 shadow-[0_0_40px_rgba(16,185,129,0.45)]'
+            }`}
+          >
+            {/* Top Close Button (X) */}
+            <button
+              type="button"
+              onClick={closePopupAndScanNext}
+              className="absolute top-3.5 right-3.5 z-20 rounded-full bg-white/10 hover:bg-white/20 p-2 text-white transition-colors cursor-pointer"
+              title="Close & Scan Next"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Modal Header Strip */}
+            <div
+              className={`p-5 text-center text-white relative overflow-hidden ${
+                isDuplicate
+                  ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-700'
+                  : isDenied
+                  ? 'bg-gradient-to-r from-slate-800 via-rose-900 to-red-900'
+                  : isFeesPending
+                  ? 'bg-gradient-to-r from-amber-600 via-orange-600 to-red-600'
+                  : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700'
+              }`}
+            >
+              {/* Decorative background glow */}
+              <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-white/20 blur-xl pointer-events-none" />
+
+              {/* Status Icon */}
+              <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md shadow-inner">
+                {isDuplicate ? (
+                  <AlertOctagon className="h-8 w-8 text-white animate-bounce" />
+                ) : isDenied ? (
+                  <XCircle className="h-8 w-8 text-white" />
+                ) : isFeesPending ? (
+                  <AlertTriangle className="h-8 w-8 text-amber-200 animate-pulse" />
+                ) : (
+                  <CheckCircle2 className="h-8 w-8 text-white" />
+                )}
+              </div>
+
+              {/* Status Title */}
+              <h2 className="text-lg font-black tracking-wide uppercase">
+                {isDuplicate
+                  ? 'ALREADY ENTERED!'
+                  : isDenied
+                  ? 'ENTRY DENIED'
+                  : isFeesPending
+                  ? '⚠️ FEES PENDING (₹500)'
+                  : '✅ ENTRY APPROVED'}
+              </h2>
+
+              {/* Sub-label description */}
+              <p className="mt-1 text-xs text-white/90 font-medium">
+                {isDuplicate
+                  ? `Pass already scanned at ${new Date(verificationResult?.verifiedAt || '').toLocaleTimeString()}`
+                  : isDenied
+                  ? verificationResult?.message
+                  : isFeesPending
+                  ? 'Collect ₹500 party fee before admitting student'
+                  : 'Student pass verified & fees confirmed paid'}
+              </p>
+            </div>
+
+            {/* Modal Body: Student Details */}
+            <div className="p-4 sm:p-5 space-y-4">
+              {scannedStudent ? (
+                <>
+                  {/* Student Identity Card */}
+                  <div className="rounded-2xl bg-white/5 border border-white/10 p-3.5 space-y-3">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                      <div>
+                        <h3 className="font-extrabold text-white text-base leading-tight">
+                          {scannedStudent.fullName}
+                        </h3>
+                        <p className="font-mono text-xs font-bold text-indigo-400 mt-0.5">
+                          {scannedStudent.enrollmentNumber}
+                        </p>
+                      </div>
+
+                      {/* Fee Badge in Card */}
+                      <div className="text-right">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wider ${
+                            scannedStudent.feeStatus === 'paid'
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                              : 'bg-amber-500/25 text-amber-300 border border-amber-500/50 animate-pulse'
+                          }`}
+                        >
+                          {scannedStudent.feeStatus === 'paid' ? (
+                            <>
+                              <Check className="h-3 w-3" />
+                              PAID (₹500)
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle className="h-3 w-3" />
+                              UNPAID (₹500)
+                            </>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="rounded-xl bg-black/20 p-2 border border-white/5">
+                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          Department
+                        </span>
+                        <span className="font-semibold text-slate-200">
+                          {scannedStudent.department}
+                        </span>
+                      </div>
+
+                      <div className="rounded-xl bg-black/20 p-2 border border-white/5">
+                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          Semester
+                        </span>
+                        <span className="font-semibold text-slate-200">
+                          {scannedStudent.semester}
+                        </span>
+                      </div>
+
+                      <div className="rounded-xl bg-black/20 p-2 border border-white/5">
+                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          Pass ID
+                        </span>
+                        <span className="font-mono font-bold text-indigo-300">
+                          {scannedStudent.id}
+                        </span>
+                      </div>
+
+                      <div className="rounded-xl bg-black/20 p-2 border border-white/5">
+                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          Mobile
+                        </span>
+                        <span className="font-mono text-slate-300">
+                          {scannedStudent.mobileNumber}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SPECIAL ACTION IF FEES PENDING: 1-Tap Mark Paid */}
+                  {isFeesPending && (
+                    <div className="rounded-2xl bg-amber-500/10 border border-amber-500/30 p-3 text-center space-y-2">
+                      <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-300">
+                        <DollarSign className="h-4 w-4" />
+                        <span>Cash / UPI Payment Pending</span>
+                      </div>
+                      <p className="text-[11px] text-amber-200/80">
+                        Did student pay ₹500 at the gate? Tap below to record payment immediately:
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleQuickMarkFeesPaid}
+                        disabled={isUpdatingFee}
+                        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 py-2.5 px-4 text-xs font-black shadow-lg shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-60"
+                      >
+                        <Check className="h-4 w-4 stroke-[3]" />
+                        <span>{isUpdatingFee ? 'Updating Database...' : 'Collect ₹500 & Mark Paid ✓'}</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Manual entry confirmation button if autoVerify is off */}
+                  {!scannedStudent.isEntryVerified && !autoVerify && !isDuplicate && (
+                    <button
+                      type="button"
+                      onClick={confirmManualEntry}
+                      disabled={isVerifying}
+                      className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 text-xs font-bold shadow-md cursor-pointer transition-colors"
+                    >
+                      {isVerifying ? 'Checking In...' : 'Confirm Entry to Party'}
+                    </button>
+                  )}
+
+                  {/* Reset entry option */}
+                  {scannedStudent.isEntryVerified && (
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
+                      <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        Entry recorded in database
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleResetEntry(scannedStudent.id)}
+                        className="text-slate-400 hover:text-white underline cursor-pointer"
+                      >
+                        Reset Pass
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* No student found message */
+                <div className="py-4 text-center space-y-2">
+                  <p className="text-xs text-slate-300">
+                    {verificationResult?.message || 'No valid pass details found.'}
+                  </p>
+                </div>
+              )}
+
+              {/* Bottom "Scan Next Pass" Action Button */}
+              <button
+                type="button"
+                onClick={closePopupAndScanNext}
+                className={`w-full rounded-xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                  isFeesPending
+                    ? 'bg-slate-800 hover:bg-slate-700 border border-slate-600'
+                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/30'
+                }`}
+              >
+                <span>Scan Next Student QR</span>
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
