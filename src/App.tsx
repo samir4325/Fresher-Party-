@@ -153,7 +153,7 @@ export default function App() {
       {/* Party Footer */}
       <footer className="no-print mt-auto border-t border-slate-900 bg-slate-950/90 py-5 text-center text-xs text-slate-500 relative z-10">
         <p className="font-semibold text-slate-400">✨ Fresher Party 2K26 · Official Event Portal ✨</p>
-        <p className="text-[11px] text-slate-600 mt-0.5">Date: 27/09/2026 · Grand Campus Arena</p>
+        <p className="text-[11px] text-slate-400 mt-0.5">Date: 27/09/2026 · Laduma banquet hall</p>
       </footer>
 
     </div>

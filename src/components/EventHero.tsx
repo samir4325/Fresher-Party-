@@ -59,8 +59,8 @@ export const EventHero: React.FC<EventHeroProps> = ({ stats, onNavigate }) => {
                   <MapPin className="h-4 w-4" />
                   <span>Venue</span>
                 </div>
-                <p className="mt-1 text-sm font-bold text-white">Grand Arena</p>
-                <p className="text-[11px] text-pink-300/80 font-medium">Campus Grounds</p>
+                <p className="mt-1 text-sm font-bold text-white">Laduma Banquet Hall</p>
+                <p className="text-[11px] text-pink-300/80 font-medium">Party Arena</p>
               </div>
 
               <div className="rounded-2xl border border-amber-500/30 bg-slate-900/80 p-3.5 shadow-lg shadow-amber-500/5">

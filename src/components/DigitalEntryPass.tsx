@@ -143,7 +143,7 @@ function generatePassDataUrl(student: StudentRegistration, qrDataUrl: string): P
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = 'bold 20px sans-serif';
-      ctx.fillText('📍 Venue: Grand Campus Arena', 375, 1105);
+      ctx.fillText('📍 Venue: Laduma banquet hall', 375, 1105);
 
       resolve(canvas.toDataURL('image/png', 1.0));
     };
@@ -375,7 +375,7 @@ export const DigitalEntryPass: React.FC<DigitalEntryPassProps> = ({
               <span>📅 Date: 27/09/2026</span>
             </div>
             <p className="text-[11px] text-slate-400">
-              📍 Venue: Grand Campus Arena
+              📍 Venue: Laduma banquet hall
             </p>
           </div>
         </div>
