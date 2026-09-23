@@ -430,31 +430,36 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
 
   return (
     <div className="mx-auto max-w-md px-3 sm:px-4 space-y-4">
-      {/* Mobile Top Bar Controls */}
-      <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
-            <QrCode className="h-4 w-4" />
+      {/* VIP Gate Scanner Header */}
+      <div className="rounded-2xl border border-fuchsia-500/30 bg-slate-900/90 p-3.5 shadow-[0_0_25px_rgba(217,70,239,0.15)] flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-violet-600 via-fuchsia-600 to-pink-500 text-white flex items-center justify-center shadow-md shadow-fuchsia-500/30">
+            <QrCode className="h-5 w-5 animate-pulse" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 text-xs sm:text-sm">Gate Scanner</h3>
-            <p className="text-[10px] text-slate-500">Live QR scanning & instant check-in</p>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-black text-white text-xs sm:text-sm tracking-wide">VIP GATE SCANNER</h3>
+              <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                LIVE
+              </span>
+            </div>
+            <p className="text-[10px] text-fuchsia-300/80">Fresher Party 2K26 Check-in</p>
           </div>
         </div>
 
         {/* Auto check-in toggle */}
-        <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg">
-          <span className="text-[11px] text-slate-600 font-medium">Auto Check-in:</span>
+        <div className="flex items-center gap-1.5 bg-slate-950/80 px-2.5 py-1.5 rounded-xl border border-slate-800">
+          <span className="text-[10px] text-slate-300 font-bold uppercase tracking-wider">Auto Pass:</span>
           <button
             type="button"
             onClick={() => setAutoVerify(!autoVerify)}
-            className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors cursor-pointer ${
-              autoVerify ? 'bg-indigo-600' : 'bg-slate-300'
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
+              autoVerify ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-md shadow-emerald-500/30' : 'bg-slate-700'
             }`}
           >
             <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                autoVerify ? 'translate-x-3.5' : 'translate-x-0.5'
+              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                autoVerify ? 'translate-x-4.5' : 'translate-x-1'
               }`}
             />
           </button>
@@ -462,54 +467,73 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
       </div>
 
       {/* Mode Switcher Tabs */}
-      <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-200/80 p-1 text-xs">
+      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-slate-900/90 border border-slate-800 p-1 text-xs">
         <button
           type="button"
           onClick={() => setScanMode('camera')}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
-            scanMode === 'camera' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600'
+          className={`py-2 rounded-xl font-bold transition-all cursor-pointer ${
+            scanMode === 'camera'
+              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-fuchsia-500/25 ring-1 ring-fuchsia-400/50'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
-          Live Camera
+          📷 Live Camera
         </button>
         <button
           type="button"
           onClick={() => setScanMode('upload')}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
-            scanMode === 'upload' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600'
+          className={`py-2 rounded-xl font-bold transition-all cursor-pointer ${
+            scanMode === 'upload'
+              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-fuchsia-500/25 ring-1 ring-fuchsia-400/50'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
-          Photo Upload
+          🖼️ Upload QR
         </button>
         <button
           type="button"
           onClick={() => setScanMode('manual')}
-          className={`py-2 rounded-lg font-semibold transition-all cursor-pointer ${
-            scanMode === 'manual' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600'
+          className={`py-2 rounded-xl font-bold transition-all cursor-pointer ${
+            scanMode === 'manual'
+              ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-fuchsia-500/25 ring-1 ring-fuchsia-400/50'
+              : 'text-slate-400 hover:text-white'
           }`}
         >
-          Manual ID
+          ⌨️ Enter ID
         </button>
       </div>
 
       {/* Camera Viewfinder */}
       {scanMode === 'camera' && (
-        <div className="relative overflow-hidden rounded-2xl bg-black border-2 border-slate-900 shadow-md aspect-square w-full flex items-center justify-center">
+        <div className="relative overflow-hidden rounded-3xl bg-slate-950 border-2 border-fuchsia-500/40 shadow-[0_0_35px_rgba(217,70,239,0.25)] aspect-square w-full flex items-center justify-center">
           <video ref={videoRef} className="h-full w-full object-cover" playsInline muted />
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Scanning Reticle */}
+          {/* Scanning Reticle with Party Laser & Neon Corners */}
           {cameraActive && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="relative h-60 w-60 rounded-3xl border-2 border-indigo-400/90 shadow-[0_0_25px_rgba(99,102,241,0.35)]">
-                {/* Corner markers */}
-                <div className="absolute -top-1.5 -left-1.5 h-6 w-6 border-t-4 border-l-4 border-white rounded-tl-xl" />
-                <div className="absolute -top-1.5 -right-1.5 h-6 w-6 border-t-4 border-r-4 border-white rounded-tr-xl" />
-                <div className="absolute -bottom-1.5 -left-1.5 h-6 w-6 border-b-4 border-l-4 border-white rounded-bl-xl" />
-                <div className="absolute -bottom-1.5 -right-1.5 h-6 w-6 border-b-4 border-r-4 border-white rounded-br-xl" />
+              <div className="relative h-64 w-64 rounded-3xl border-2 border-fuchsia-400/60 shadow-[0_0_30px_rgba(217,70,239,0.3)]">
+                {/* Glowing Neon Corner markers */}
+                <div className="absolute -top-1.5 -left-1.5 h-7 w-7 border-t-4 border-l-4 border-cyan-400 rounded-tl-xl shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+                <div className="absolute -top-1.5 -right-1.5 h-7 w-7 border-t-4 border-r-4 border-cyan-400 rounded-tr-xl shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+                <div className="absolute -bottom-1.5 -left-1.5 h-7 w-7 border-b-4 border-l-4 border-cyan-400 rounded-bl-xl shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+                <div className="absolute -bottom-1.5 -right-1.5 h-7 w-7 border-b-4 border-r-4 border-cyan-400 rounded-br-xl shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
 
-                {/* Animated scan beam */}
-                <div className="absolute inset-x-2 top-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-pulse shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+                {/* Laser Sweep Line */}
+                <div className="absolute inset-x-2 animate-laser h-1 bg-gradient-to-r from-transparent via-fuchsia-400 to-transparent shadow-[0_0_15px_rgba(217,70,239,1)]" />
+
+                {/* Center target crosshair */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-8 w-8 rounded-full border border-fuchsia-400/40 flex items-center justify-center">
+                    <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-ping" />
+                  </div>
+                </div>
+
+                <div className="absolute -bottom-9 inset-x-0 text-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-fuchsia-300 bg-slate-950/80 px-3 py-1 rounded-full border border-fuchsia-500/30">
+                    Align QR in Box
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -519,7 +543,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
             <button
               type="button"
               onClick={flipCamera}
-              className="rounded-full bg-black/60 p-2.5 text-white backdrop-blur-xs hover:bg-black/80 transition-colors cursor-pointer"
+              className="rounded-full bg-slate-900/80 p-2.5 text-fuchsia-300 border border-fuchsia-500/30 backdrop-blur-xs hover:bg-slate-800 transition-colors cursor-pointer"
               title="Flip Camera"
             >
               <RotateCcw className="h-4 w-4" />
@@ -527,13 +551,13 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
           </div>
 
           {!cameraActive && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 p-4 text-center text-white">
-              <Camera className="h-10 w-10 text-indigo-400 mb-2" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 p-4 text-center text-white">
+              <Camera className="h-12 w-12 text-fuchsia-400 mb-2 animate-bounce" />
               <p className="text-xs text-slate-300 mb-3">Camera is paused</p>
               <button
                 type="button"
                 onClick={startCamera}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-xs cursor-pointer"
+                className="rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-fuchsia-500/30 cursor-pointer"
               >
                 Start Scanner
               </button>
@@ -541,7 +565,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
           )}
 
           {cameraError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-4 text-center text-xs text-red-400">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/90 p-4 text-center text-xs text-rose-400">
               {cameraError}
             </div>
           )}
@@ -550,10 +574,10 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
 
       {/* Upload Mode */}
       {scanMode === 'upload' && (
-        <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-white p-8 text-center">
-          <Upload className="h-10 w-10 text-slate-400 mx-auto mb-2" />
-          <p className="text-xs text-slate-600 mb-3">Upload screenshot of student QR Pass</p>
-          <label className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white cursor-pointer shadow-xs">
+        <div className="rounded-3xl border-2 border-dashed border-fuchsia-500/40 bg-slate-900/80 p-8 text-center shadow-lg">
+          <Upload className="h-12 w-12 text-fuchsia-400 mx-auto mb-2" />
+          <p className="text-xs text-slate-300 mb-3">Upload screenshot of student Fresher Pass</p>
+          <label className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white cursor-pointer shadow-lg shadow-fuchsia-500/30">
             <span>Select Image</span>
             <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
           </label>
@@ -562,8 +586,8 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
 
       {/* Manual ID Mode */}
       {scanMode === 'manual' && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3">
-          <label className="block text-xs font-bold text-slate-700">
+        <div className="rounded-3xl border border-fuchsia-500/30 bg-slate-900/90 p-4 space-y-3 shadow-lg">
+          <label className="block text-xs font-bold text-slate-200">
             Enter Enrollment Number or Pass ID
           </label>
           <div className="flex gap-2">
@@ -572,7 +596,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
               value={manualInput}
               onChange={(e) => setManualInput(e.target.value)}
               placeholder="e.g. 26CE042 or FP-2k26-4812"
-              className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-xs font-mono uppercase focus:border-indigo-600 focus:outline-none"
+              className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-xs font-mono uppercase text-white focus:border-fuchsia-500 focus:outline-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleVerify(manualInput);
               }}
@@ -581,7 +605,7 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
               type="button"
               onClick={() => handleVerify(manualInput)}
               disabled={isVerifying || !manualInput.trim()}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-bold text-white cursor-pointer disabled:opacity-50"
+              className="rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-2 text-xs font-black uppercase text-white cursor-pointer disabled:opacity-50"
             >
               Verify
             </button>
@@ -591,35 +615,35 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
 
       {/* Recent Scans Strip */}
       {recentScans.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
-          <div className="flex items-center justify-between text-[11px] font-bold text-slate-700">
-            <span>Recent Gate Scans</span>
-            <span className="text-slate-400 font-normal">Last {recentScans.length}</span>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-3 space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-bold text-slate-300">
+            <span>⚡ Recent Gate Scans</span>
+            <span className="text-slate-500 font-normal">Last {recentScans.length}</span>
           </div>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-800">
             {recentScans.map((scan, i) => (
-              <div key={i} className="py-1.5 flex items-center justify-between text-xs">
+              <div key={i} className="py-2 flex items-center justify-between text-xs">
                 <div>
-                  <p className="font-semibold text-slate-800 text-[11px]">{scan.name}</p>
-                  <p className="font-mono text-[10px] text-slate-400">{scan.id} • {scan.time}</p>
+                  <p className="font-bold text-slate-200 text-[11px]">{scan.name}</p>
+                  <p className="font-mono text-[10px] text-fuchsia-300/80">{scan.id} • {scan.time}</p>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                    className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase ${
                       scan.feeStatus === 'paid'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-amber-100 text-amber-800'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                     }`}
                   >
                     {scan.feeStatus === 'paid' ? 'PAID' : 'PENDING'}
                   </span>
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
                       scan.status === 'verified'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50'
                         : scan.status === 'duplicate'
-                        ? 'bg-red-50 text-red-700 border border-red-200'
-                        : 'bg-slate-100 text-slate-600'
+                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/50'
+                        : 'bg-slate-800 text-slate-400'
                     }`}
                   >
                     {scan.status.toUpperCase()}

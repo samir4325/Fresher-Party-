@@ -18,58 +18,58 @@ export const EventHero: React.FC<EventHeroProps> = ({ stats, onNavigate }) => {
           
           {/* Left Column: Event Title & Details */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-medium text-indigo-300">
-              <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-              <span>Official College Fresher Welcome 2025</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-fuchsia-500/40 bg-fuchsia-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-fuchsia-300 shadow-[0_0_15px_rgba(217,70,239,0.2)]">
+              <Sparkles className="h-4 w-4 text-fuchsia-400 animate-pulse" />
+              <span>★ Official Fresher Party 2K26 ★</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-              Ignite The Night. <br />
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
-                AURA 2025 Fresher Fiesta
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-none">
+              GLOW & CELEBRATE. <br />
+              <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 bg-clip-text text-transparent drop-shadow-sm">
+                FRESHER FIESTA 2K26
               </span>
             </h1>
 
             <p className="text-sm sm:text-base text-slate-300 max-w-xl leading-relaxed">
-              Welcome to the biggest night of the academic year! Register your spot, grab your verified digital entry pass with QR code, and experience an unforgettable evening of live beats, performances, and new beginnings.
+              Step into the most electrifying night of your college life! Register your entry pass, get your exclusive verified digital QR pass, and celebrate with DJ beats, live performances, and unforgettable memories!
             </p>
 
             {/* Event Key Facts Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-              <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-                <div className="flex items-center gap-1.5 text-xs text-indigo-400 font-medium">
-                  <Calendar className="h-3.5 w-3.5" />
+              <div className="rounded-2xl border border-fuchsia-500/30 bg-slate-900/80 p-3.5 shadow-lg shadow-fuchsia-500/5">
+                <div className="flex items-center gap-1.5 text-xs text-fuchsia-400 font-bold">
+                  <Calendar className="h-4 w-4" />
                   <span>Date</span>
                 </div>
-                <p className="mt-1 text-sm font-semibold text-slate-100">Oct 10, 2025</p>
-                <p className="text-[11px] text-slate-400">Friday Evening</p>
+                <p className="mt-1 text-sm font-bold text-white">27/09/2026</p>
+                <p className="text-[11px] text-fuchsia-300/80 font-medium">Party Night</p>
               </div>
 
-              <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-                <div className="flex items-center gap-1.5 text-xs text-purple-400 font-medium">
-                  <Clock className="h-3.5 w-3.5" />
-                  <span>Gates Open</span>
+              <div className="rounded-2xl border border-violet-500/30 bg-slate-900/80 p-3.5 shadow-lg shadow-violet-500/5">
+                <div className="flex items-center gap-1.5 text-xs text-violet-400 font-bold">
+                  <Sparkles className="h-4 w-4" />
+                  <span>Entry Access</span>
                 </div>
-                <p className="mt-1 text-sm font-semibold text-slate-100">5:00 PM</p>
-                <p className="text-[11px] text-slate-400">Main Entry Gate 1 & 2</p>
+                <p className="mt-1 text-sm font-bold text-white">VIP QR Pass</p>
+                <p className="text-[11px] text-violet-300/80 font-medium">Express Gate Scan</p>
               </div>
 
-              <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-                <div className="flex items-center gap-1.5 text-xs text-pink-400 font-medium">
-                  <MapPin className="h-3.5 w-3.5" />
+              <div className="rounded-2xl border border-pink-500/30 bg-slate-900/80 p-3.5 shadow-lg shadow-pink-500/5">
+                <div className="flex items-center gap-1.5 text-xs text-pink-400 font-bold">
+                  <MapPin className="h-4 w-4" />
                   <span>Venue</span>
                 </div>
-                <p className="mt-1 text-sm font-semibold text-slate-100">Grand Arena</p>
-                <p className="text-[11px] text-slate-400">Main Campus Grounds</p>
+                <p className="mt-1 text-sm font-bold text-white">Grand Arena</p>
+                <p className="text-[11px] text-pink-300/80 font-medium">Campus Grounds</p>
               </div>
 
-              <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-                <div className="flex items-center gap-1.5 text-xs text-amber-400 font-medium">
-                  <Shirt className="h-3.5 w-3.5" />
+              <div className="rounded-2xl border border-amber-500/30 bg-slate-900/80 p-3.5 shadow-lg shadow-amber-500/5">
+                <div className="flex items-center gap-1.5 text-xs text-amber-400 font-bold">
+                  <Shirt className="h-4 w-4" />
                   <span>Dress Code</span>
                 </div>
-                <p className="mt-1 text-sm font-semibold text-slate-100">Retro Glam</p>
-                <p className="text-[11px] text-slate-400">Or Western Formal</p>
+                <p className="mt-1 text-sm font-bold text-white">Party / Glam</p>
+                <p className="text-[11px] text-amber-300/80 font-medium">Dress to Impress</p>
               </div>
             </div>
 
@@ -78,23 +78,23 @@ export const EventHero: React.FC<EventHeroProps> = ({ stats, onNavigate }) => {
               <button
                 type="button"
                 onClick={() => onNavigate('register')}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:opacity-95 hover:scale-[1.01] transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 px-6 py-3.5 text-sm font-black uppercase tracking-wider text-white shadow-xl shadow-fuchsia-500/30 hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
-                <span>Register for Fresher Pass</span>
+                <span>Get Fresher Pass 🎉</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigate('pass')}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-fuchsia-500/40 bg-slate-900/90 px-5 py-3.5 text-sm font-bold text-fuchsia-200 hover:bg-slate-800 hover:text-white transition-all cursor-pointer"
               >
-                <span>Find My Entry Pass</span>
+                <span>Find My Pass</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigate('scanner')}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-950/40 px-4 py-3 text-sm font-semibold text-indigo-300 hover:bg-indigo-900/50 transition-colors cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-950/40 px-5 py-3.5 text-sm font-bold text-emerald-300 hover:bg-emerald-900/50 transition-colors cursor-pointer"
               >
                 <QrCode className="h-4 w-4" />
                 <span>Gate Scanner</span>

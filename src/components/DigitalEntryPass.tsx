@@ -124,98 +124,115 @@ export const DigitalEntryPass: React.FC<DigitalEntryPassProps> = ({
         </div>
       )}
 
-      {/* --- CLEAN DIGITAL PASS CARD --- */}
+      {/* --- VIP PARTY ENTRY PASS CARD --- */}
       <div
         ref={passCardRef}
-        className="rounded-2xl border-2 border-indigo-600 bg-white shadow-md overflow-hidden text-slate-900"
+        className="relative rounded-3xl border-2 border-fuchsia-500/50 bg-gradient-to-b from-slate-900 via-slate-950 to-black shadow-[0_0_40px_rgba(217,70,239,0.25)] overflow-hidden text-white"
       >
-        {/* Pass Header */}
-        <div className="bg-indigo-600 px-5 py-4 text-white text-center">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-200 block">
-            Annual Fresher Party 2k26
-          </span>
-          <h2 className="text-xl font-bold tracking-tight mt-0.5">
-            Student Entry Pass
-          </h2>
+        {/* Top Hologram Neon Banner */}
+        <div className="relative bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 px-5 py-4 text-white text-center overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.2)_50%,transparent_75%)] bg-[length:250%_250%] opacity-40" />
+          <div className="relative">
+            <span className="text-[11px] font-black uppercase tracking-[0.25em] text-fuchsia-100 block drop-shadow-xs">
+              ★ OFFICIAL VIP PASS ★
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight mt-0.5 drop-shadow-md">
+              FRESHER PARTY 2K26
+            </h2>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-violet-200 mt-0.5">
+              Grand Welcome Bash
+            </p>
+          </div>
+        </div>
+
+        {/* Ticket Perforation Notches */}
+        <div className="relative flex items-center justify-between px-3 py-1">
+          <div className="w-4 h-4 rounded-full bg-slate-950 -ml-5 border-r border-fuchsia-500/40" />
+          <div className="flex-1 border-b-2 border-dashed border-slate-700/80 mx-2" />
+          <div className="w-4 h-4 rounded-full bg-slate-950 -mr-5 border-l border-fuchsia-500/40" />
         </div>
 
         {/* Pass Body */}
         <div className="p-5 space-y-4 text-center">
-          
           {/* Student Info */}
-          <div className="border-b border-slate-100 pb-3">
-            <span className="text-[10px] font-mono text-indigo-600 font-bold uppercase block">
-              Pass ID: {student.id}
+          <div className="space-y-1 border-b border-slate-800 pb-3">
+            <span className="text-[10px] font-mono text-fuchsia-400 font-bold uppercase tracking-wider block">
+              PASS ID: {student.id}
             </span>
-            <h3 className="text-xl font-bold text-slate-900 mt-1">
+            <h3 className="text-2xl font-black text-white tracking-tight">
               {student.fullName}
             </h3>
-            <p className="text-xs font-mono font-semibold text-slate-700 mt-0.5">
-              Enrollment: {student.enrollmentNumber}
+            <p className="text-xs font-mono font-bold text-violet-300">
+              Roll / Enroll: {student.enrollmentNumber}
             </p>
-            <p className="text-xs font-medium text-indigo-700 mt-1">
+            <p className="text-xs font-semibold text-slate-300 pt-0.5">
               {student.department} · {student.semester}
             </p>
           </div>
 
-          {/* QR Code */}
-          <div className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 bg-slate-50">
+          {/* QR Code Card */}
+          <div className="relative mx-auto max-w-[240px] p-3 rounded-2xl bg-white shadow-lg border-2 border-fuchsia-500/40">
             {qrDataUrl ? (
               <img
                 src={qrDataUrl}
-                alt="Entry QR Code"
+                alt="Party Entry QR Code"
                 crossOrigin="anonymous"
-                className="h-48 w-48 object-contain rounded-lg"
+                className="h-48 w-48 mx-auto object-contain rounded-xl"
               />
             ) : (
-              <div className="h-48 w-48 flex items-center justify-center">
+              <div className="h-48 w-48 mx-auto flex items-center justify-center">
                 <QrCode className="h-10 w-10 text-slate-400 animate-pulse" />
               </div>
             )}
-            <p className="mt-2 text-xs font-semibold text-slate-700">
-              Scan at Entrance Gate
+            <div className="mt-2 pt-1 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] font-bold text-slate-800">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>Gate Entry QR Code</span>
+            </div>
+          </div>
+
+          {/* Verification Status */}
+          <div
+            className={`rounded-xl py-2 px-3 text-xs font-black uppercase tracking-wider border ${
+              student.isEntryVerified
+                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40'
+                : 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/40'
+            }`}
+          >
+            {student.isEntryVerified ? '✓ Entry Verified' : '★ Valid Party Pass ★'}
+          </div>
+
+          {/* Event Details - Date set to 27/09/2026, time removed */}
+          <div className="rounded-xl bg-slate-900/90 border border-slate-800 p-2.5 text-center space-y-0.5">
+            <div className="flex items-center justify-center gap-2 text-xs font-bold text-amber-300">
+              <span>📅 Date: 27/09/2026</span>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              📍 Venue: Grand Campus Arena
             </p>
           </div>
-
-          {/* Status badge */}
-          <div className={`rounded-lg py-1.5 px-3 text-xs font-semibold ${
-            student.isEntryVerified
-              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-              : 'bg-indigo-50 text-indigo-800 border border-indigo-200'
-          }`}>
-            {student.isEntryVerified ? '✓ Entry Verified' : '● Valid for Entry'}
-          </div>
-
-          {/* Event Details */}
-          <div className="text-[11px] text-slate-500 pt-1">
-            <p className="font-semibold text-slate-700">Oct 10, 2026 · 5:00 PM</p>
-            <p>Grand Campus Arena</p>
-          </div>
-
         </div>
 
         {/* Download Button */}
-        <div className="no-print no-download p-4 bg-slate-50 border-t border-slate-100">
+        <div className="no-print no-download p-4 bg-slate-900/90 border-t border-slate-800">
           <button
             type="button"
             onClick={handleDownloadAsImage}
             disabled={isDownloading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 py-2.5 px-4 text-sm font-semibold text-white transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 hover:brightness-110 active:scale-[0.99] py-3 px-4 text-xs font-black uppercase tracking-wider text-white transition-all cursor-pointer shadow-lg shadow-fuchsia-500/25 disabled:opacity-50"
           >
             {isDownloading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Downloading Image...</span>
+                <span>Downloading Pass...</span>
               </>
             ) : (
               <>
                 <Download className="h-4 w-4" />
-                <span>Download Pass as Image</span>
+                <span>Save Pass to Gallery</span>
               </>
             )}
           </button>
         </div>
-
       </div>
 
     </div>

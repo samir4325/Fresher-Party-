@@ -4,8 +4,15 @@ import { INITIAL_STUDENTS } from '../data/seedData';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const LOCAL_STORAGE_KEY = 'fresher_party_students_v1';
+const LOCAL_STORAGE_KEY = 'fresher_party_students_v3';
 const DEMO_IDS = new Set(['FP-2k26-4812', 'FP-2k26-5931', 'FP-2k26-6124', 'FP-2k26-7289', 'FP-2k26-8390']);
+
+// Auto-cleanup legacy local storage data on client load
+try {
+  ['fresher_party_students_v1', 'fresher_party_students_v2', 'fresher_party_students', 'fresher_party_my_pass', 'fresher_party_last_pass'].forEach((key) => {
+    localStorage.removeItem(key);
+  });
+} catch {}
 
 function getLocalStudents(): StudentRegistration[] {
   try {

@@ -84,42 +84,49 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
   };
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-lg px-4 py-6 sm:px-6">
       
-      {/* Clean Form Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+      {/* Party Form Card */}
+      <div className="relative rounded-3xl border border-fuchsia-500/40 bg-gradient-to-b from-slate-900/95 via-slate-950/95 to-slate-950/95 p-6 sm:p-8 shadow-[0_0_40px_rgba(217,70,239,0.15)] text-white">
         
+        {/* Glow corner */}
+        <div className="absolute top-0 right-0 h-32 w-32 bg-fuchsia-500/10 blur-3xl pointer-events-none rounded-full" />
+        <div className="absolute bottom-0 left-0 h-32 w-32 bg-violet-500/10 blur-3xl pointer-events-none rounded-full" />
+
         {/* Header */}
-        <div className="border-b border-slate-100 pb-4 mb-6">
-          <h2 className="text-2xl font-bold text-slate-900">
-            Fresher Party 2k26 Registration
+        <div className="border-b border-slate-800/80 pb-4 mb-6 relative">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-fuchsia-400 block mb-1">
+            ★ Student Entry Portal ★
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            Fresher Party 2K26 Registration
           </h2>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500">
-            Fill the form below to get your official QR Entry Pass.
+          <p className="mt-1 text-xs text-slate-400">
+            Fill your details below to generate your official digital QR party pass instantly!
           </p>
         </div>
 
         {/* Error notification */}
         {errorMessage && (
-          <div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+          <div className="mb-5 rounded-2xl border border-rose-500/40 bg-rose-950/40 p-3.5 text-xs text-rose-300 flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
             <p className="flex-1 font-medium">{errorMessage}</p>
             <button
               type="button"
               onClick={() => setErrorMessage(null)}
-              className="text-red-400 hover:text-red-600"
+              className="text-rose-400 hover:text-rose-200 cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 relative">
           
           {/* 1. Full Name */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Full Name <span className="text-red-500">*</span>
+            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+              Full Name <span className="text-fuchsia-400">*</span>
             </label>
             <input
               type="text"
@@ -127,15 +134,15 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Rohan Patel"
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none"
+              className="w-full rounded-xl border border-slate-800 bg-slate-900/90 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 focus:outline-none"
             />
           </div>
 
           {/* 2. Enrollment Number & Mobile Number */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Enrollment Number <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                Enrollment Number <span className="text-fuchsia-400">*</span>
               </label>
               <input
                 type="text"
@@ -143,13 +150,13 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
                 value={enrollmentNumber}
                 onChange={(e) => setEnrollmentNumber(e.target.value.toUpperCase())}
                 placeholder="e.g. 24CE042"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 font-mono placeholder-slate-400 uppercase focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none"
+                className="w-full rounded-xl border border-slate-800 bg-slate-900/90 px-3.5 py-2.5 text-sm text-white font-mono placeholder-slate-500 uppercase focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Mobile Number <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                Mobile Number <span className="text-fuchsia-400">*</span>
               </label>
               <input
                 type="tel"
@@ -158,7 +165,7 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
                 value={mobileNumber}
                 onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ''))}
                 placeholder="10-digit number"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 font-mono placeholder-slate-400 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none"
+                className="w-full rounded-xl border border-slate-800 bg-slate-900/90 px-3.5 py-2.5 text-sm text-white font-mono placeholder-slate-500 focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 focus:outline-none"
               />
             </div>
           </div>
@@ -166,16 +173,16 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
           {/* 3. Branch (Department) & Semester */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Branch <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                Branch <span className="text-fuchsia-400">*</span>
               </label>
               <select
                 value={branch}
                 onChange={(e) => setBranch(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none cursor-pointer"
+                className="w-full rounded-xl border border-slate-800 bg-slate-900/90 px-3.5 py-2.5 text-sm text-white focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 focus:outline-none cursor-pointer"
               >
                 {BRANCH_OPTIONS.map((b) => (
-                  <option key={b} value={b}>
+                  <option key={b} value={b} className="bg-slate-900 text-white">
                     {b}
                   </option>
                 ))}
@@ -183,16 +190,16 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Semester <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                Semester <span className="text-fuchsia-400">*</span>
               </label>
               <select
                 value={semester}
                 onChange={(e) => setSemester(e.target.value as SemesterOption)}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 focus:outline-none cursor-pointer"
+                className="w-full rounded-xl border border-slate-800 bg-slate-900/90 px-3.5 py-2.5 text-sm text-white focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500 focus:outline-none cursor-pointer"
               >
                 {SEMESTER_OPTIONS.map((sem) => (
-                  <option key={sem} value={sem}>
+                  <option key={sem} value={sem} className="bg-slate-900 text-white">
                     {sem}
                   </option>
                 ))}
@@ -202,8 +209,8 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
 
           {/* 4. Gender */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Gender <span className="text-red-500">*</span>
+            <label className="block text-xs font-bold text-slate-300 mb-1.5">
+              Gender <span className="text-fuchsia-400">*</span>
             </label>
             <div className="flex gap-2">
               {(['Male', 'Female', 'Other'] as GenderOption[]).map((g) => (
@@ -211,10 +218,10 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
                   key={g}
                   type="button"
                   onClick={() => setGender(g)}
-                  className={`flex-1 rounded-lg py-2 px-2 text-xs font-medium border cursor-pointer transition-colors ${
+                  className={`flex-1 rounded-xl py-2 px-2 text-xs font-bold border cursor-pointer transition-all ${
                     gender === g
-                      ? 'border-indigo-600 bg-indigo-50 text-indigo-700 font-semibold'
-                      : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                      ? 'border-fuchsia-500 bg-fuchsia-500/20 text-fuchsia-300 shadow-sm shadow-fuchsia-500/20'
+                      : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
                 >
                   {g}
@@ -228,7 +235,7 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-3 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 hover:brightness-110 active:scale-[0.99] px-5 py-3.5 text-sm font-black uppercase tracking-wider text-white shadow-xl shadow-fuchsia-500/30 transition-all cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
@@ -238,7 +245,7 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
               ) : (
                 <>
                   <CheckCircle2 className="h-4 w-4" />
-                  <span>Register & Get QR Pass</span>
+                  <span>Register & Get VIP Pass 🎉</span>
                 </>
               )}
             </button>
@@ -248,14 +255,14 @@ export const StudentRegistrationForm: React.FC<StudentRegistrationFormProps> = (
 
         {/* Retrieve Existing Pass */}
         {onViewPassPrompt && (
-          <div className="mt-5 pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
+          <div className="mt-5 pt-4 border-t border-slate-800/80 text-center text-xs text-slate-400">
             Already registered?{' '}
             <button
               type="button"
               onClick={onViewPassPrompt}
-              className="text-indigo-600 font-semibold hover:underline cursor-pointer"
+              className="text-fuchsia-400 font-bold hover:underline cursor-pointer ml-1"
             >
-              Search & View your QR Pass
+              Search & View your QR Pass →
             </button>
           </div>
         )}
