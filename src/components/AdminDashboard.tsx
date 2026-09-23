@@ -91,24 +91,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const handleToggleFeeStatus = async (student: StudentRegistration) => {
-    const nextStatus: FeeStatus = student.feeStatus === 'paid' ? 'pending' : 'paid';
+    const isCurrentlyPaid = student.feeStatus === 'paid';
+    const nextFee: FeeStatus = isCurrentlyPaid ? 'pending' : 'paid';
+    const nextApproval: RegistrationStatus = isCurrentlyPaid ? 'pending' : 'approved';
     try {
-      await StudentService.updateStudent(student.id, { feeStatus: nextStatus });
-      showNotice(`${student.fullName}'s fee marked as ${nextStatus.toUpperCase()}`);
+      await StudentService.updateStudent(student.id, {
+        feeStatus: nextFee,
+        status: nextApproval,
+      });
+      showNotice(
+        nextFee === 'paid'
+          ? `${student.fullName}: Fees PAID & Pass APPROVED ✓`
+          : `${student.fullName}: Fees set to PENDING`
+      );
       loadData();
     } catch {
       showNotice('Failed to update fee status');
-    }
-  };
-
-  const handleToggleApproval = async (student: StudentRegistration) => {
-    const nextStatus: RegistrationStatus = student.status === 'approved' ? 'pending' : 'approved';
-    try {
-      await StudentService.updateStudent(student.id, { status: nextStatus });
-      showNotice(`${student.fullName} marked as ${nextStatus.toUpperCase()}`);
-      loadData();
-    } catch {
-      showNotice('Failed to update approval status');
     }
   };
 
@@ -247,15 +245,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <span className="text-[10px] text-red-600 font-medium">Payment Due</span>
         </div>
 
-        {/* Approved Count */}
+        {/* Total Collection */}
         <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-3 shadow-xs">
           <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block">
-            Approved Pass
+            Total Collection
           </span>
           <p className="text-2xl font-bold font-mono text-indigo-800 mt-1">
-            {stats?.approvedRegistrations || 0}
+            ₹{stats?.totalFeesCollected?.toLocaleString() || 0}
           </p>
-          <span className="text-[10px] text-indigo-600 font-medium">Eligible</span>
+          <span className="text-[10px] text-indigo-600 font-medium">₹500 / Student</span>
         </div>
 
         {/* Gate Verified */}
@@ -290,21 +288,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           onChange={(e) => setFeeFilter(e.target.value)}
           className="rounded-lg border border-slate-300 py-1.5 px-2.5 text-xs text-slate-700 font-semibold focus:border-indigo-600 focus:outline-none"
         >
-          <option value="All">All Fees</option>
-          <option value="paid">Fees Paid Only</option>
+          <option value="All">All Fees Status</option>
+          <option value="paid">Fees Paid (Approved)</option>
           <option value="pending">Fees Pending Only</option>
-        </select>
-
-        {/* Approval filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-slate-300 py-1.5 px-2.5 text-xs text-slate-700 focus:border-indigo-600 focus:outline-none"
-        >
-          <option value="All">All Approvals</option>
-          <option value="approved">Approved</option>
-          <option value="pending">Pending Approval</option>
-          <option value="rejected">Rejected</option>
         </select>
 
         {/* Branch Filter */}
@@ -353,8 +339,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <th className="py-2.5 px-3">Enrollment</th>
                 <th className="py-2.5 px-3">Branch & Sem</th>
                 <th className="py-2.5 px-3">Mobile</th>
-                <th className="py-2.5 px-3">Fee Status</th>
-                <th className="py-2.5 px-3">Approval</th>
+                <th className="py-2.5 px-3">Fees & Pass Approval</th>
                 <th className="py-2.5 px-3">Gate Entry</th>
                 <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
@@ -362,7 +347,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <tbody className="divide-y divide-slate-100 text-slate-800">
               {students.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">
+                  <td colSpan={7} className="py-8 text-center text-slate-400">
                     No registrations found matching the filters.
                   </td>
                 </tr>
@@ -394,35 +379,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       {student.mobileNumber}
                     </td>
 
-                    {/* Fee Status (Click to Toggle) */}
+                    {/* Fees & Pass Approval (Unified 1-Click Toggle) */}
                     <td className="py-2.5 px-3">
                       <button
                         type="button"
                         onClick={() => handleToggleFeeStatus(student)}
-                        className={`rounded-md px-2 py-1 text-[11px] font-bold border transition-colors cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold border transition-all cursor-pointer shadow-2xs ${
                           student.feeStatus === 'paid'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
-                            : 'bg-red-50 text-red-700 border-red-300 hover:bg-red-100'
+                            : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
                         }`}
-                        title="Click to toggle Fee Paid / Pending"
+                        title="Click to toggle: Fees Paid automatically Approves pass"
                       >
-                        {student.feeStatus === 'paid' ? 'PAID ✓' : 'PENDING ✕'}
-                      </button>
-                    </td>
-
-                    {/* Approval Status (Click to Toggle) */}
-                    <td className="py-2.5 px-3">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleApproval(student)}
-                        className={`rounded-md px-2 py-1 text-[11px] font-semibold border transition-colors cursor-pointer ${
-                          student.status === 'approved'
-                            ? 'bg-indigo-50 text-indigo-700 border-indigo-300 hover:bg-indigo-100'
-                            : 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100'
-                        }`}
-                        title="Click to toggle Approved / Pending"
-                      >
-                        {student.status.toUpperCase()}
+                        {student.feeStatus === 'paid' ? (
+                          <>
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                            <span>PAID & APPROVED ✓</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                            <span>FEES PENDING (₹500)</span>
+                          </>
+                        )}
                       </button>
                     </td>
 

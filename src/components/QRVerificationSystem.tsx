@@ -223,18 +223,6 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
         return;
       }
 
-      if (student.status === 'pending') {
-        setVerificationResult({
-          success: false,
-          message: 'ENTRY PENDING: Registration has not been approved yet.',
-          student,
-        });
-        addRecentScan(student.id, student.fullName, student.feeStatus || 'pending', 'rejected');
-        setShowPopup(true);
-        setIsVerifying(false);
-        return;
-      }
-
       if (student.isEntryVerified) {
         setVerificationResult({
           success: false,
@@ -249,17 +237,28 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
         return;
       }
 
-      if (autoVerify) {
-        const result = await StudentService.verifyEntry(student.id, 'Gate Scanner');
-        setVerificationResult(result);
-        if (result.student) setScannedStudent(result.student);
-        addRecentScan(student.id, student.fullName, student.feeStatus || 'pending', 'verified');
-        if (onStudentUpdated) onStudentUpdated();
+      // If fees are paid and autoVerify is on, verify entry immediately
+      if (student.feeStatus === 'paid') {
+        if (autoVerify) {
+          const result = await StudentService.verifyEntry(student.id, 'Gate Scanner');
+          setVerificationResult(result);
+          if (result.student) setScannedStudent(result.student);
+          addRecentScan(student.id, student.fullName, 'paid', 'verified');
+          if (onStudentUpdated) onStudentUpdated();
+        } else {
+          setVerificationResult({
+            success: true,
+            alreadyVerified: false,
+            message: 'Fees Paid. Pass is valid and eligible for entry.',
+            student,
+          });
+        }
       } else {
+        // Fees pending: Show warning popup with 1-click collect & admit button
         setVerificationResult({
-          success: true,
+          success: false,
           alreadyVerified: false,
-          message: 'Pass is valid and eligible for entry.',
+          message: 'Party fee ₹500 is pending. Please collect fee before entry.',
           student,
         });
       }
@@ -299,17 +298,23 @@ export const QRVerificationSystem: React.FC<QRVerificationSystemProps> = ({
     if (!scannedStudent) return;
     setIsUpdatingFee(true);
     try {
+      const now = new Date().toISOString();
       const updated = await StudentService.updateStudent(scannedStudent.id, {
         feeStatus: 'paid',
+        status: 'approved',
+        isEntryVerified: true,
+        verifiedAt: now,
+        verifiedBy: 'Gate Scanner (Fee Paid)',
       });
       setScannedStudent(updated);
-      if (verificationResult) {
-        setVerificationResult({
-          ...verificationResult,
-          student: updated,
-          message: 'Fee collected (₹500 PAID) & entry approved!',
-        });
-      }
+      setVerificationResult({
+        success: true,
+        alreadyVerified: false,
+        message: 'Fee collected (₹500 PAID) & Gate Entry Approved! Welcome! 🎉',
+        student: updated,
+        verifiedAt: now,
+      });
+      addRecentScan(updated.id, updated.fullName, 'paid', 'verified');
       if (onStudentUpdated) onStudentUpdated();
     } catch (err) {
       console.error(err);
