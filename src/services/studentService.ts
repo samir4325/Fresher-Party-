@@ -338,7 +338,7 @@ export const StudentService = {
 
     const feesPaidCount = students.filter((s) => s.feeStatus === 'paid').length;
     const feesPendingCount = students.filter((s) => s.feeStatus !== 'paid').length;
-    const totalFeesCollected = feesPaidCount * 500;
+    const totalFeesCollected = feesPaidCount * 300;
 
     const departmentCounts: Record<string, number> = {};
     const semesterCounts: Record<string, number> = {};

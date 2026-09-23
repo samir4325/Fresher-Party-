@@ -278,7 +278,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <p className="text-2xl font-bold font-mono text-indigo-800 mt-1">
             ₹{stats?.totalFeesCollected?.toLocaleString() || 0}
           </p>
-          <span className="text-[10px] text-indigo-600 font-medium">Live Collection</span>
+          <span className="text-[10px] text-indigo-600 font-medium">₹300 / Person</span>
         </div>
 
         {/* Gate Verified */}
