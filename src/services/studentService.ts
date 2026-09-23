@@ -155,41 +155,22 @@ export const StudentService = {
     return found || null;
   },
 
-  // Register a new student
+  // Register a new student (Instant response, background cloud sync)
   async registerStudent(
     data: Omit<StudentRegistration, 'id' | 'status' | 'registeredAt' | 'isEntryVerified' | 'verifiedAt'>
   ): Promise<StudentRegistration> {
     const cleanEnrollment = data.enrollmentNumber.trim().toUpperCase();
 
-    // Check duplicate enrollment
-    if (db && isFirebaseConfigured) {
-      try {
-        const q = query(
-          collection(db, STUDENTS_COLLECTION),
-          where('enrollmentNumber', '==', cleanEnrollment)
-        );
-        const existingSnap = await getDocs(q);
-        if (!existingSnap.empty) {
-          const exist = existingSnap.docs[0].data() as StudentRegistration;
-          throw new Error(
-            `Enrollment number "${cleanEnrollment}" is already registered (Pass: ${exist.id})`
-          );
-        }
-      } catch (err: any) {
-        if (err.message && err.message.includes('already registered')) {
-          throw err;
-        }
-      }
-    } else {
-      const local = getLocalStudents();
-      const existing = local.find((s) => s.enrollmentNumber.toUpperCase() === cleanEnrollment);
-      if (existing) {
-        throw new Error(
-          `Enrollment number "${cleanEnrollment}" is already registered (Pass: ${existing.id})`
-        );
-      }
+    // 1. Instant local duplicate check (0ms)
+    const local = getLocalStudents();
+    const existing = local.find((s) => s.enrollmentNumber.toUpperCase() === cleanEnrollment);
+    if (existing) {
+      throw new Error(
+        `Enrollment number "${cleanEnrollment}" is already registered (Pass: ${existing.id})`
+      );
     }
 
+    // 2. Create student record immediately
     const newId = `FP-2k26-${Math.floor(1000 + Math.random() * 9000)}`;
     const newStudent: StudentRegistration = {
       ...data,
@@ -203,30 +184,21 @@ export const StudentService = {
       notes: '',
     };
 
+    // 3. Save locally instantly so pass is immediately ready
+    saveLocalStudents([newStudent, ...local.filter((s) => s.id !== newId)]);
+
+    // 4. Background Sync to Firestore (non-blocking, never freezes the UI)
     if (db && isFirebaseConfigured) {
-      try {
-        await setDoc(doc(db, STUDENTS_COLLECTION, newId), newStudent);
-      } catch (err) {
-        console.warn('Failed to write to Firestore, saving locally', err);
-      }
+      setDoc(doc(db, STUDENTS_COLLECTION, newId), newStudent).catch((err) => {
+        console.warn('Background Firestore write queued/fallback:', err);
+      });
     }
 
-    const current = getLocalStudents();
-    saveLocalStudents([newStudent, ...current.filter((s) => s.id !== newId)]);
     return newStudent;
   },
 
-  // Update a student registration
+  // Update a student registration (instant local update + background sync)
   async updateStudent(id: string, updates: Partial<StudentRegistration>): Promise<StudentRegistration> {
-    if (db && isFirebaseConfigured) {
-      try {
-        const docRef = doc(db, STUDENTS_COLLECTION, id);
-        await updateDoc(docRef, updates);
-      } catch (err) {
-        console.warn('Failed to update Firestore, updating locally', err);
-      }
-    }
-
     const local = getLocalStudents();
     const index = local.findIndex((s) => s.id === id);
     const updated: StudentRegistration = {
@@ -237,21 +209,28 @@ export const StudentService = {
     if (index !== -1) local[index] = updated;
     else local.push(updated);
     saveLocalStudents(local);
+
+    if (db && isFirebaseConfigured) {
+      const docRef = doc(db, STUDENTS_COLLECTION, id);
+      updateDoc(docRef, updates).catch((err) => {
+        console.warn('Background Firestore update queued:', err);
+      });
+    }
+
     return updated;
   },
 
-  // Delete student registration
+  // Delete student registration (instant local delete + background sync)
   async deleteStudent(id: string): Promise<boolean> {
-    if (db && isFirebaseConfigured) {
-      try {
-        await deleteDoc(doc(db, STUDENTS_COLLECTION, id));
-      } catch (err) {
-        console.warn('Failed to delete from Firestore', err);
-      }
-    }
-
     const local = getLocalStudents().filter((s) => s.id !== id);
     saveLocalStudents(local);
+
+    if (db && isFirebaseConfigured) {
+      deleteDoc(doc(db, STUDENTS_COLLECTION, id)).catch((err) => {
+        console.warn('Background Firestore delete queued:', err);
+      });
+    }
+
     return true;
   },
 

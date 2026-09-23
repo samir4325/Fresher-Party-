@@ -44,7 +44,7 @@ export const DigitalEntryPass: React.FC<DigitalEntryPassProps> = ({
             dark: '#1e293b',
             light: '#ffffff',
           },
-          errorCorrectionLevel: 'H',
+          errorCorrectionLevel: 'M',
         });
         setQrDataUrl(url);
       } catch (err) {
