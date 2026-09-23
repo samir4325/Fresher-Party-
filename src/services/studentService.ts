@@ -69,7 +69,7 @@ export const StudentService = {
     let list: StudentRegistration[] = [];
 
     try {
-      const res = await fetch(`${RTDB_URL}/students.json`);
+      const res = await fetch(`${RTDB_URL}/students.json`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data && typeof data === 'object') {
@@ -78,7 +78,9 @@ export const StudentService = {
           );
           saveLocalStudents(list);
         } else {
-          list = getLocalStudents();
+          // Database is empty (all cleared or empty)
+          list = [];
+          saveLocalStudents([]);
         }
       } else {
         list = getLocalStudents();
@@ -117,35 +119,15 @@ export const StudentService = {
     return list;
   },
 
-  // Get a single student by ID or Enrollment Number (Instant local + cloud fallback)
+  // Get a single student by ID or Enrollment Number (Live Cloud Master with Cache Cleanup)
   async getStudent(identifier: string): Promise<StudentRegistration | null> {
     const clean = identifier.trim();
     if (!clean) return null;
     const qLower = clean.toLowerCase();
 
-    // 1. Instant check from local cache (0ms!)
-    const local = getLocalStudents();
-    const localFound = local.find(
-      (s) =>
-        s.id.toLowerCase() === qLower ||
-        s.enrollmentNumber.toLowerCase() === qLower
-    );
-    if (localFound) return localFound;
-
-    // 2. Fallback to Firebase Realtime Database (for cross-device instant sync)
+    // 1. Check directly with Firebase Realtime Database first for real-time truth
     try {
-      // Direct ID fetch
-      const res = await fetch(`${RTDB_URL}/students/${clean}.json`);
-      if (res.ok) {
-        const student = await res.json();
-        if (student && student.id && !DEMO_IDS.has(student.id)) {
-          saveLocalStudents([student, ...local.filter((s) => s.id !== student.id)]);
-          return student as StudentRegistration;
-        }
-      }
-
-      // If clean was enrollment number or case-mismatched, fetch the live students object
-      const allRes = await fetch(`${RTDB_URL}/students.json`);
+      const allRes = await fetch(`${RTDB_URL}/students.json`, { cache: 'no-store' });
       if (allRes.ok) {
         const allData = await allRes.json();
         if (allData && typeof allData === 'object') {
@@ -159,28 +141,53 @@ export const StudentService = {
               s.enrollmentNumber.toLowerCase() === qLower
           );
           if (found) return found;
+          // If not in Firebase live list, it was deleted on another device!
+          return null;
+        } else {
+          // Database is completely empty, clear local storage
+          saveLocalStudents([]);
+          return null;
         }
       }
     } catch (err) {
-      console.warn('Firebase student lookup error:', err);
+      console.warn('Firebase live lookup offline fallback:', err);
     }
 
-    return null;
+    // 2. Offline fallback to local cache only if network failed
+    const local = getLocalStudents();
+    const localFound = local.find(
+      (s) =>
+        s.id.toLowerCase() === qLower ||
+        s.enrollmentNumber.toLowerCase() === qLower
+    );
+    return localFound || null;
   },
 
-  // Register a new student (Instant pass response + real-time cloud write)
+  // Register a new student (Real-time cloud write + local cache)
   async registerStudent(
     data: Omit<StudentRegistration, 'id' | 'status' | 'registeredAt' | 'isEntryVerified' | 'verifiedAt'>
   ): Promise<StudentRegistration> {
     const cleanEnrollment = data.enrollmentNumber.trim().toUpperCase();
 
-    // 1. Instant local duplicate check (0ms)
-    const local = getLocalStudents();
-    const existing = local.find((s) => s.enrollmentNumber.toUpperCase() === cleanEnrollment);
-    if (existing) {
-      throw new Error(
-        `Enrollment number "${cleanEnrollment}" is already registered (Pass: ${existing.id})`
-      );
+    // 1. Check for duplicates in live Firebase DB
+    try {
+      const res = await fetch(`${RTDB_URL}/students.json`, { cache: 'no-store' });
+      if (res.ok) {
+        const cloudData = await res.json();
+        if (cloudData && typeof cloudData === 'object') {
+          const liveList = Object.values(cloudData) as StudentRegistration[];
+          const existing = liveList.find(
+            (s) => s && s.enrollmentNumber && s.enrollmentNumber.toUpperCase() === cleanEnrollment
+          );
+          if (existing) {
+            throw new Error(
+              `Enrollment number "${cleanEnrollment}" is already registered (Pass ID: ${existing.id})`
+            );
+          }
+        }
+      }
+    } catch (e: any) {
+      if (e?.message?.includes('already registered')) throw e;
     }
 
     // 2. Generate unique pass ID
@@ -197,11 +204,20 @@ export const StudentService = {
       notes: '',
     };
 
-    // 3. Save locally instantly so pass is shown to student in 0.01 second
-    saveLocalStudents([newStudent, ...local.filter((s) => s.id !== newId)]);
+    // 3. Write directly to Firebase Realtime Database
+    try {
+      await fetch(`${RTDB_URL}/students/${newId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newStudent),
+      });
+    } catch (err) {
+      console.warn('Direct Firebase save warning:', err);
+    }
 
-    // 4. Real-time background sync to Firebase Realtime Database
-    syncToFirebase(newId, newStudent, 'PUT');
+    // 4. Update local cache
+    const local = getLocalStudents();
+    saveLocalStudents([newStudent, ...local.filter((s) => s.id !== newId)]);
 
     return newStudent;
   },
@@ -219,18 +235,23 @@ export const StudentService = {
     else local.push(updated);
     saveLocalStudents(local);
 
-    // Sync changes to Firebase Realtime Database
-    syncToFirebase(id, updates, 'PATCH');
+    // Sync changes to Firebase Realtime Database directly
+    try {
+      await fetch(`${RTDB_URL}/students/${id}.json`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+    } catch (err) {
+      console.warn('Firebase RTDB update error:', err);
+    }
 
     return updated;
   },
 
-  // Delete student registration
+  // Delete student registration across all devices
   async deleteStudent(id: string): Promise<boolean> {
-    const local = getLocalStudents().filter((s) => s.id !== id);
-    saveLocalStudents(local);
-
-    // Delete from Firebase Realtime Database and wait for confirmation
+    // 1. Remove from Firebase Realtime Database directly
     try {
       await fetch(`${RTDB_URL}/students/${id}.json`, {
         method: 'DELETE',
@@ -239,12 +260,16 @@ export const StudentService = {
       console.warn('Firebase RTDB delete error:', err);
     }
 
+    // 2. Remove from local storage
+    const local = getLocalStudents().filter((s) => s.id !== id);
+    saveLocalStudents(local);
+
     return true;
   },
 
-  // Clear all students / reset
+  // Clear all students / reset across all devices
   async clearAllStudents(): Promise<boolean> {
-    saveLocalStudents([]);
+    // 1. Wipe Firebase Realtime Database
     try {
       await fetch(`${RTDB_URL}/students.json`, {
         method: 'DELETE',
@@ -252,6 +277,9 @@ export const StudentService = {
     } catch (err) {
       console.warn('Firebase RTDB clear error:', err);
     }
+
+    // 2. Wipe local storage
+    saveLocalStudents([]);
     return true;
   },
 
