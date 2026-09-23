@@ -5,25 +5,27 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const LOCAL_STORAGE_KEY = 'fresher_party_students_v1';
+const DEMO_IDS = new Set(['FP-2k26-4812', 'FP-2k26-5931', 'FP-2k26-6124', 'FP-2k26-7289', 'FP-2k26-8390']);
 
 function getLocalStudents(): StudentRegistration[] {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (raw) {
+    if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((s) => !DEMO_IDS.has(s.id));
       }
     }
   } catch (e) {
     console.warn('Could not read from localStorage', e);
   }
-  return INITIAL_STUDENTS;
+  return [];
 }
 
 function saveLocalStudents(students: StudentRegistration[]) {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(students));
+    const cleanList = students.filter((s) => !DEMO_IDS.has(s.id));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleanList));
   } catch (e) {
     console.warn('Could not save to localStorage', e);
   }
@@ -47,31 +49,6 @@ async function syncToFirebase(studentId: string, data: Partial<StudentRegistrati
   }
 }
 
-// Initial seed helper
-let hasSeededRTDB = false;
-async function ensureRTDBSeeded() {
-  if (hasSeededRTDB) return;
-  try {
-    const res = await fetch(`${RTDB_URL}/students.json`);
-    const data = await res.json();
-    if (!data) {
-      // RTDB is empty, populate with seed data
-      const seedObj: Record<string, StudentRegistration> = {};
-      INITIAL_STUDENTS.forEach((s) => {
-        seedObj[s.id] = s;
-      });
-      await fetch(`${RTDB_URL}/students.json`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(seedObj),
-      });
-    }
-    hasSeededRTDB = true;
-  } catch (err) {
-    console.warn('RTDB seed check warning:', err);
-  }
-}
-
 export const StudentService = {
   // Fetch all students from Firebase Realtime Database
   async getStudents(filters?: {
@@ -85,12 +62,13 @@ export const StudentService = {
     let list: StudentRegistration[] = [];
 
     try {
-      await ensureRTDBSeeded();
       const res = await fetch(`${RTDB_URL}/students.json`);
       if (res.ok) {
         const data = await res.json();
         if (data && typeof data === 'object') {
-          list = Object.values(data) as StudentRegistration[];
+          list = (Object.values(data) as StudentRegistration[]).filter(
+            (s) => s && s.id && !DEMO_IDS.has(s.id)
+          );
           saveLocalStudents(list);
         } else {
           list = getLocalStudents();
@@ -223,9 +201,28 @@ export const StudentService = {
     const local = getLocalStudents().filter((s) => s.id !== id);
     saveLocalStudents(local);
 
-    // Delete from Firebase Realtime Database
-    syncToFirebase(id, {}, 'DELETE');
+    // Delete from Firebase Realtime Database and wait for confirmation
+    try {
+      await fetch(`${RTDB_URL}/students/${id}.json`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.warn('Firebase RTDB delete error:', err);
+    }
 
+    return true;
+  },
+
+  // Clear all students / reset
+  async clearAllStudents(): Promise<boolean> {
+    saveLocalStudents([]);
+    try {
+      await fetch(`${RTDB_URL}/students.json`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.warn('Firebase RTDB clear error:', err);
+    }
     return true;
   },
 

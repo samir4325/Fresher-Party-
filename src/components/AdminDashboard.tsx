@@ -129,10 +129,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     try {
       await StudentService.deleteStudent(id);
       setShowDeleteConfirm(null);
-      showNotice('Registration deleted.');
-      loadData();
+      showNotice('Student record permanently deleted.');
+      await loadData();
     } catch {
       showNotice('Failed to delete student.');
+    }
+  };
+
+  const handleClearAll = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete all students? This will remove all demo/test records and cannot be undone.'
+    );
+    if (!confirmed) return;
+    try {
+      await StudentService.clearAllStudents();
+      showNotice('All records have been permanently cleared.');
+      await loadData();
+    } catch {
+      showNotice('Failed to clear records.');
     }
   };
 
@@ -187,6 +201,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <Download className="h-3.5 w-3.5 text-slate-500" />
             <span>Export CSV</span>
+          </button>
+
+          {/* Clear / Reset All Data */}
+          <button
+            type="button"
+            onClick={handleClearAll}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1.5 text-xs font-bold text-red-700 cursor-pointer shadow-xs transition-colors"
+            title="Delete all demo/test registrations"
+          >
+            <Trash2 className="h-3.5 w-3.5 text-red-600" />
+            <span>Clear All Data</span>
           </button>
 
           <button
