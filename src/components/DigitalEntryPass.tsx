@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import QRCode from 'qrcode';
-import html2canvas from 'html2canvas';
 import {
   Download,
   Printer,
@@ -8,12 +7,153 @@ import {
   QrCode,
   ChevronLeft,
   Loader2,
+  Share2,
 } from 'lucide-react';
 import { StudentRegistration } from '../types';
 
 interface DigitalEntryPassProps {
   student: StudentRegistration;
   onBack?: () => void;
+}
+
+// Draw a crystal clear high-res VIP ticket on HTML5 Canvas (100% reliable across all phones & browsers)
+function generatePassDataUrl(student: StudentRegistration, qrDataUrl: string): Promise<string> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 750;
+    canvas.height = 1200;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      resolve(qrDataUrl);
+      return;
+    }
+
+    // 1. Background (Dark Obsidian Theme)
+    const bgGradient = ctx.createLinearGradient(0, 0, 0, 1200);
+    bgGradient.addColorStop(0, '#0f172a');
+    bgGradient.addColorStop(0.5, '#090d16');
+    bgGradient.addColorStop(1, '#020617');
+    ctx.fillStyle = bgGradient;
+
+    // Rounded Card Shape
+    ctx.beginPath();
+    ctx.roundRect(15, 15, 720, 1170, 36);
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#d946ef';
+    ctx.stroke();
+
+    // 2. Top Header Banner
+    const headerGradient = ctx.createLinearGradient(15, 15, 735, 190);
+    headerGradient.addColorStop(0, '#7c3aed');
+    headerGradient.addColorStop(0.5, '#c026d3');
+    headerGradient.addColorStop(1, '#ec4899');
+    ctx.fillStyle = headerGradient;
+    ctx.beginPath();
+    ctx.roundRect(15, 15, 720, 190, [36, 36, 0, 0]);
+    ctx.fill();
+
+    // Top Header Text
+    ctx.fillStyle = '#fae8ff';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('★ OFFICIAL VIP PASS ★', 375, 65);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 40px sans-serif';
+    ctx.fillText('FRESHER PARTY 2K26', 375, 120);
+
+    ctx.fillStyle = '#fbcfe8';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('GRAND WELCOME BASH', 375, 160);
+
+    // Perforation line
+    ctx.strokeStyle = '#475569';
+    ctx.setLineDash([12, 10]);
+    ctx.beginPath();
+    ctx.moveTo(35, 230);
+    ctx.lineTo(715, 230);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Pass ID
+    ctx.fillStyle = '#f472b6';
+    ctx.font = 'bold 22px monospace';
+    ctx.fillText(`PASS ID: ${student.id}`, 375, 275);
+
+    // Student Full Name
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 36px sans-serif';
+    ctx.fillText(student.fullName, 375, 325);
+
+    // Roll / Enrollment No
+    ctx.fillStyle = '#c084fc';
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText(`Roll / Enroll: ${student.enrollmentNumber}`, 375, 370);
+
+    // Department & Semester
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '600 20px sans-serif';
+    ctx.fillText(`${student.department} · ${student.semester}`, 375, 410);
+
+    // QR Code Container Box
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.roundRect(165, 450, 420, 450, 24);
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#d946ef';
+    ctx.stroke();
+
+    // Draw QR Code inside box
+    const qrImg = new Image();
+    qrImg.onload = () => {
+      ctx.drawImage(qrImg, 195, 470, 360, 360);
+
+      // Label below QR
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('⚡ Gate Entry QR Code', 375, 870);
+
+      // Verification Badge Box
+      ctx.fillStyle = student.isEntryVerified ? 'rgba(16, 185, 129, 0.2)' : 'rgba(217, 70, 239, 0.2)';
+      ctx.beginPath();
+      ctx.roundRect(165, 930, 420, 60, 16);
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = student.isEntryVerified ? '#10b981' : '#d946ef';
+      ctx.stroke();
+
+      ctx.fillStyle = student.isEntryVerified ? '#34d399' : '#f472b6';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText(student.isEntryVerified ? '✓ ENTRY VERIFIED' : '★ VALID VIP PARTY PASS ★', 375, 968);
+
+      // Event Details Box (Date set to 27/09/2026, no time)
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.roundRect(75, 1015, 600, 130, 20);
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#334155';
+      ctx.stroke();
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText('📅 Date: 27/09/2026', 375, 1060);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('📍 Venue: Grand Campus Arena', 375, 1105);
+
+      resolve(canvas.toDataURL('image/png', 1.0));
+    };
+
+    qrImg.onerror = () => {
+      resolve(canvas.toDataURL('image/png', 1.0));
+    };
+
+    qrImg.src = qrDataUrl;
+  });
 }
 
 export const DigitalEntryPass: React.FC<DigitalEntryPassProps> = ({
@@ -41,7 +181,7 @@ export const DigitalEntryPass: React.FC<DigitalEntryPassProps> = ({
           width: 300,
           margin: 1,
           color: {
-            dark: '#1e293b',
+            dark: '#0f172a',
             light: '#ffffff',
           },
           errorCorrectionLevel: 'M',
@@ -54,37 +194,66 @@ export const DigitalEntryPass: React.FC<DigitalEntryPassProps> = ({
     makeQR();
   }, [student]);
 
-  // Handle Download Pass as Image via html2canvas
+  // Handle Download Pass as Image (Dual fallback: Pure Canvas + Direct Blob Download)
   const handleDownloadAsImage = async () => {
-    if (!passCardRef.current || isDownloading) return;
+    if (isDownloading || !qrDataUrl) return;
     setIsDownloading(true);
     setDownloadSuccess(false);
 
     try {
-      await new Promise((res) => setTimeout(res, 80));
+      // 1. Generate crisp high-resolution ticket PNG using Canvas
+      const dataUrl = await generatePassDataUrl(student, qrDataUrl);
+      const filename = `Fresher_Party_Pass_${student.enrollmentNumber}.png`;
 
-      const element = passCardRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        ignoreElements: (el) => el.classList.contains('no-download'),
-      });
+      // 2. Convert DataURL to Blob for reliable mobile file handling
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
 
-      const dataUrl = canvas.toDataURL('image/png', 1.0);
+      // 3. Try Web Share API with File (for Android / iOS native Save to Photos)
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({ files: [new File([blob], filename, { type: 'image/png' })] })
+      ) {
+        try {
+          const file = new File([blob], filename, { type: 'image/png' });
+          await navigator.share({
+            title: `Fresher Party Pass - ${student.fullName}`,
+            text: `My VIP Entry Pass for Fresher Party 2K26 (Roll: ${student.enrollmentNumber})`,
+            files: [file],
+          });
+          setDownloadSuccess(true);
+          setTimeout(() => setDownloadSuccess(false), 4000);
+          setIsDownloading(false);
+          return;
+        } catch (shareErr) {
+          console.warn('Native share cancelled or not allowed, falling back to download:', shareErr);
+        }
+      }
+
+      // 4. Standard Direct Download Anchor Trigger
       const link = document.createElement('a');
-      link.download = `Fresher_Pass_${student.enrollmentNumber}.png`;
-      link.href = dataUrl;
+      link.href = blobUrl;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
       setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 3500);
+      setTimeout(() => setDownloadSuccess(false), 4000);
     } catch (err) {
       console.error('Failed to download pass as image:', err);
+      // Fallback: download QR code directly if canvas fails
+      if (qrDataUrl) {
+        const link = document.createElement('a');
+        link.href = qrDataUrl;
+        link.download = `Fresher_Pass_QR_${student.enrollmentNumber}.png`;
+        link.click();
+        setDownloadSuccess(true);
+      }
     } finally {
       setIsDownloading(false);
     }
@@ -99,7 +268,7 @@ export const DigitalEntryPass: React.FC<DigitalEntryPassProps> = ({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-fuchsia-300 hover:text-white bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 transition-colors cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
             <span>New Registration</span>
@@ -109,18 +278,18 @@ export const DigitalEntryPass: React.FC<DigitalEntryPassProps> = ({
         <button
           type="button"
           onClick={() => window.print()}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer ml-auto"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-1.5 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer ml-auto"
         >
-          <Printer className="h-3.5 w-3.5 text-slate-500" />
+          <Printer className="h-3.5 w-3.5 text-slate-400" />
           <span>Print</span>
         </button>
       </div>
 
       {/* Download Alert */}
       {downloadSuccess && (
-        <div className="no-print mb-3 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800 flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-          <span>Pass downloaded to gallery successfully!</span>
+        <div className="no-print mb-3 rounded-2xl border border-emerald-500/40 bg-emerald-950/60 p-3 text-xs text-emerald-300 flex items-center gap-2 shadow-lg shadow-emerald-500/10 animate-fade-in">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>Pass saved to gallery successfully! 🎉</span>
         </div>
       )}
 
@@ -176,7 +345,6 @@ export const DigitalEntryPass: React.FC<DigitalEntryPassProps> = ({
               <img
                 src={qrDataUrl}
                 alt="Party Entry QR Code"
-                crossOrigin="anonymous"
                 className="h-48 w-48 mx-auto object-contain rounded-xl"
               />
             ) : (
@@ -212,23 +380,23 @@ export const DigitalEntryPass: React.FC<DigitalEntryPassProps> = ({
           </div>
         </div>
 
-        {/* Download Button */}
-        <div className="no-print no-download p-4 bg-slate-900/90 border-t border-slate-800">
+        {/* Download Buttons Section */}
+        <div className="no-print no-download p-4 bg-slate-900/90 border-t border-slate-800 space-y-2">
           <button
             type="button"
             onClick={handleDownloadAsImage}
             disabled={isDownloading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 hover:brightness-110 active:scale-[0.99] py-3 px-4 text-xs font-black uppercase tracking-wider text-white transition-all cursor-pointer shadow-lg shadow-fuchsia-500/25 disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 hover:brightness-110 active:scale-[0.99] py-3.5 px-4 text-xs font-black uppercase tracking-wider text-white transition-all cursor-pointer shadow-lg shadow-fuchsia-500/25 disabled:opacity-50"
           >
             {isDownloading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Downloading Pass...</span>
+                <span>Generating & Saving Pass...</span>
               </>
             ) : (
               <>
                 <Download className="h-4 w-4" />
-                <span>Save Pass to Gallery</span>
+                <span>Save Pass to Gallery / Share 🎉</span>
               </>
             )}
           </button>
