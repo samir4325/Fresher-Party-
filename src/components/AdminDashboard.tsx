@@ -444,7 +444,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                     {/* Actions */}
                     <td className="py-2.5 px-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => onViewPass(student)}
@@ -464,10 +464,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <button
                           type="button"
                           onClick={() => setShowDeleteConfirm(student.id)}
-                          className="p-1 text-slate-500 hover:text-red-600 cursor-pointer"
-                          title="Delete Registration"
+                          className="inline-flex items-center gap-1 rounded-md bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 px-2 py-1 text-[11px] font-bold cursor-pointer transition-colors"
+                          title="Delete Student Record"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-3 w-3" />
+                          <span>Del</span>
                         </button>
                       </div>
                     </td>
@@ -603,24 +604,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-lg border border-slate-200 text-center space-y-3">
-            <h3 className="font-bold text-slate-900 text-sm">Delete Registration?</h3>
-            <p className="text-xs text-slate-500">
-              Are you sure you want to delete pass {showDeleteConfirm}?
+            <h3 className="font-bold text-slate-900 text-sm">Delete Student Record?</h3>
+            <p className="text-xs text-slate-600">
+              Are you sure you want to delete pass <strong className="font-mono text-red-600">{showDeleteConfirm}</strong>?
+            </p>
+            <p className="text-[11px] text-slate-400">
+              This will permanently delete this record from the database.
             </p>
             <div className="flex justify-center gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(null)}
-                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600"
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => handleDelete(showDeleteConfirm)}
-                className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white"
+                className="rounded-lg bg-red-600 hover:bg-red-700 px-4 py-1.5 text-xs font-bold text-white cursor-pointer shadow-xs"
               >
-                Delete
+                Yes, Delete
               </button>
             </div>
           </div>
